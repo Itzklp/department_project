@@ -1,4 +1,5 @@
 import { useState } from "react";
+import config from "../../config";
 
 export default function PublishedBookForm() {
   const [form, setForm] = useState({
@@ -19,7 +20,7 @@ export default function PublishedBookForm() {
     e.preventDefault();
 
     try {
-      const res = await fetch("http://localhost:8080/api/v1/publishedBook", {
+      const res = await fetch(`${config.API_BASE_URL}/api/v1/publishedBook`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({

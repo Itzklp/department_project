@@ -1,4 +1,5 @@
 import { useState } from "react";
+import config from "../../config";
 
 export default function FacultyForm() {
   const [form, setForm] = useState({
@@ -41,7 +42,7 @@ export default function FacultyForm() {
 
       console.log("Sending payload:", payload); // Debug log
 
-      const res = await fetch("http://localhost:8080/api/v1/faculty", {
+      const res = await fetch(`${config.API_BASE_URL}/api/v1/faculty`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),

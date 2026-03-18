@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import config from "../../config";
 
 export default function Login() {
   const navigate = useNavigate();
@@ -23,7 +24,7 @@ export default function Login() {
     setError("");
 
     try {
-      const res = await fetch("http://localhost:8080/api/v1/auth/login", {
+      const res = await fetch(`${config.API_BASE_URL}/api/v1/auth/login`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({

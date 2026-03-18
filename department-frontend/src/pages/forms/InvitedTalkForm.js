@@ -1,4 +1,5 @@
 import { useState } from "react";
+import config from "../../config";
 
 export default function InvitedTalkForm() {
   const [form, setForm] = useState({
@@ -20,7 +21,7 @@ export default function InvitedTalkForm() {
     e.preventDefault();
 
     try {
-      const res = await fetch("http://localhost:8080/api/v1/invitedTalk", {
+      const res = await fetch(`${config.API_BASE_URL}/api/v1/invitedTalk`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(form),

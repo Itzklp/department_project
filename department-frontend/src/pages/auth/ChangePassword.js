@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import config from "../../config";
 
 export default function ChangePassword() {
   const navigate = useNavigate();
@@ -48,7 +49,7 @@ export default function ChangePassword() {
         return;
       }
 
-      const res = await fetch("http://localhost:8080/api/v1/auth/updatepassword", {
+      const res = await fetch(`${config.API_BASE_URL}/api/v1/auth/updatepassword`, {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",

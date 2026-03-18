@@ -1,4 +1,5 @@
 import { useState } from "react";
+import config from "../../config";
 
 export default function DepartmentEventForm() {
   const [form, setForm] = useState({
@@ -17,7 +18,7 @@ export default function DepartmentEventForm() {
     e.preventDefault();
 
     try {
-      const res = await fetch("http://localhost:8080/api/v1/departmentEvent", {
+      const res = await fetch(`${config.API_BASE_URL}/api/v1/departmentEvent`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(form),

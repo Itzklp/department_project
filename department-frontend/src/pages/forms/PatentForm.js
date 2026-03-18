@@ -1,4 +1,5 @@
 import { useState } from "react";
+import config from "../../config";
 
 export default function PatentForm() {
   const [form, setForm] = useState({
@@ -18,7 +19,7 @@ export default function PatentForm() {
     e.preventDefault();
 
     try {
-      const res = await fetch("http://localhost:8080/api/v1/patent", {
+      const res = await fetch(`${config.API_BASE_URL}/api/v1/patent`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({

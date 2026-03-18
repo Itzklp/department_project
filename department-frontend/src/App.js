@@ -5,6 +5,7 @@ import Login from "./pages/auth/Login";
 import ForgotPassword from "./pages/auth/ForgotPassword";
 import ChangePassword from "./pages/auth/ChangePassword";
 import Dashboard from "./pages/Dashboard";
+import ResetPassword from "./pages/auth/ResetPassword";
 
 // Form Pages
 import FacultyForm from "./pages/forms/FacultyForm";
@@ -30,7 +31,7 @@ function App() {
           {/* Public Routes - Auth Pages */}
           <Route path="/login" element={<Login />} />
           <Route path="/forgot-password" element={<ForgotPassword />} />
-          
+          <Route path="/api/v1/auth/resetpassword/:resetToken" element={<ResetPassword />} />
           {/* Semi-Protected - Change Password */}
           <Route path="/change-password" element={<ChangePassword />} />
 

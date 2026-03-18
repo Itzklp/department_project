@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import Select from "react-select";
+import config from "../../config";
 
 export default function PublicationForm() {
   const [form, setForm] = useState({
@@ -20,7 +21,7 @@ export default function PublicationForm() {
     const fetchFaculty = async () => {
       try {
         setIsLoading(true);
-        const res = await fetch("http://localhost:8080/api/v1/faculty");
+        const res = await fetch(`${config.API_BASE_URL}/api/v1/faculty`);
         const data = await res.json();
 
         if (data.success) {
@@ -60,7 +61,7 @@ export default function PublicationForm() {
     const authorIds = form.authors.map(author => author.value);
 
     try {
-      const pubRes = await fetch("http://localhost:8080/api/v1/publication", {
+      const pubRes = await fetch(`${config.API_BASE_URL}/api/v1/publication`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({

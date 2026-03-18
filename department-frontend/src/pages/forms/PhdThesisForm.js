@@ -1,4 +1,5 @@
 import { useState } from "react";
+import config from "../../config";
 
 export default function PhdThesisForm() {
   const [form, setForm] = useState({
@@ -18,7 +19,7 @@ export default function PhdThesisForm() {
     e.preventDefault();
 
     try {
-      const res = await fetch("http://localhost:8080/api/v1/phdThesis", {
+      const res = await fetch(`${config.API_BASE_URL}/api/v1/phdThesis`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({

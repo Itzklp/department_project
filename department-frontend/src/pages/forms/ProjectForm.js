@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import Select from "react-select";
+import config from "../../config";
 
 export default function ProjectForm() {
   const [form, setForm] = useState({
@@ -24,7 +25,7 @@ export default function ProjectForm() {
   useEffect(() => {
     const fetchFaculty = async () => {
       try {
-        const res = await fetch("http://localhost:8080/api/v1/faculty");
+        const res = await fetch(`${config.API_BASE_URL}/api/v1/faculty`);
         const data = await res.json();
         if (data.success) {
           const options = data.faculties.map((faculty) => ({
@@ -55,7 +56,7 @@ export default function ProjectForm() {
     }
 
     try {
-      const res = await fetch("http://localhost:8080/api/v1/project/add", {
+      const res = await fetch(`${config.API_BASE_URL}/api/v1/project/add`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
