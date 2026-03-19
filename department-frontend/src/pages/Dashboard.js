@@ -1,13 +1,13 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import config from "../config"; // Make sure you have this config file created!
+import config from "../config";
 
 export default function Dashboard() {
   const navigate = useNavigate();
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
   
-  // NEW: State to hold the categorized contributions
+  // State to hold the categorized contributions
   const [dashboardData, setDashboardData] = useState({});
   const [dataError, setDataError] = useState("");
 
@@ -33,7 +33,7 @@ export default function Dashboard() {
           const userData = await userRes.json();
           setUser(userData.data);
 
-          // 2. NEW: If the user is a faculty member, fetch their contributions
+          // 2. Fetch Contributions
           if (userData.data.role === "faculty" || userData.data.role === "admin") {
             try {
               const dashRes = await fetch(`${config.API_BASE_URL}/api/v1/dashboard/my-dashboard`, {
@@ -55,7 +55,6 @@ export default function Dashboard() {
             }
           }
         } else {
-          // Token invalid or expired
           handleLogout();
         }
       } catch (err) {
@@ -87,51 +86,37 @@ export default function Dashboard() {
     );
   }
 
-  return (
-    <div className="min-h-screen bg-gray-50">
-      {/* Header */}
-      <header className="bg-white shadow">
-        <div className="max-w-7xl mx-auto px-4 py-6 flex items-center justify-between">
-          <div>
-            <h1 className="text-3xl font-bold text-gray-900">Dashboard</h1>
-            <p className="mt-1 text-sm text-gray-600">
-              Welcome back, {user?.name || "User"}!
-            </p>
-          </div>
-          <button
-            onClick={handleLogout}
-            className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition"
-          >
-            Logout
-          </button>
-        </div>
-      </header>
+  // Helper to check if dashboard is entirely empty
+  const hasAnyData = Object.values(dashboardData).some(arr => arr && arr.length > 0);
 
+  return (
+    <div className="bg-transparent">
       {/* Main Content */}
-      <main className="max-w-7xl mx-auto px-4 py-8">
+      <main className="max-w-7xl mx-auto w-full">
+        
         {/* User Info Card */}
-        <div className="bg-white rounded-lg shadow-md p-6 mb-6">
+        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 mb-8 mt-2">
           <h2 className="text-xl font-bold text-gray-900 mb-4">
             Your Profile
           </h2>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
-              <p className="text-sm text-gray-600">Name</p>
+              <p className="text-sm text-gray-500">Name</p>
               <p className="text-lg font-medium text-gray-900">{user?.name}</p>
             </div>
             <div>
-              <p className="text-sm text-gray-600">Email</p>
+              <p className="text-sm text-gray-500">Email</p>
               <p className="text-lg font-medium text-gray-900">{user?.email}</p>
             </div>
             <div>
-              <p className="text-sm text-gray-600">Role</p>
-              <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-blue-100 text-blue-800 capitalize">
+              <p className="text-sm text-gray-500">Role</p>
+              <span className="inline-flex items-center px-3 py-1 mt-1 rounded-full text-sm font-medium bg-blue-100 text-blue-800 capitalize">
                 {user?.role}
               </span>
             </div>
             {user?.facultyProfile && (
               <div>
-                <p className="text-sm text-gray-600">Faculty ID</p>
+                <p className="text-sm text-gray-500">Faculty ID</p>
                 <p className="text-lg font-medium text-gray-900">
                   {user.facultyProfile._id || user.facultyProfile}
                 </p>
@@ -140,184 +125,79 @@ export default function Dashboard() {
           </div>
         </div>
 
-        {/* Quick Actions (Kept exactly as you had them) */}
-        <div className="bg-white rounded-lg shadow-md p-6 mb-8">
-          <h2 className="text-xl font-bold text-gray-900 mb-4">
-            Quick Actions
+        {/* My Contributions Section */}
+        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+          <h2 className="text-2xl font-bold text-gray-900 mb-6 border-b border-gray-100 pb-3">
+            My Contributions History
           </h2>
           
-          {/* Admin Quick Actions */}
-          {user?.role === "admin" && (
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-               <button onClick={() => navigate("/forms/faculty")} className="p-4 border-2 border-blue-200 rounded-lg hover:border-blue-500 hover:bg-blue-50 transition text-left">
-                <div className="text-3xl mb-2">👤</div>
-                <h3 className="font-semibold text-gray-900">Add Faculty</h3>
-                <p className="text-sm text-gray-600">Register new faculty member</p>
-              </button>
-              <button onClick={() => navigate("/forms/publication")} className="p-4 border-2 border-green-200 rounded-lg hover:border-green-500 hover:bg-green-50 transition text-left">
-                <div className="text-3xl mb-2">📄</div>
-                <h3 className="font-semibold text-gray-900">Add Publication</h3>
-                <p className="text-sm text-gray-600">Submit new publication</p>
-              </button>
-              <button onClick={() => navigate("/forms/project")} className="p-4 border-2 border-purple-200 rounded-lg hover:border-purple-500 hover:bg-purple-50 transition text-left">
-                <div className="text-3xl mb-2">🔬</div>
-                <h3 className="font-semibold text-gray-900">Add Project</h3>
-                <p className="text-sm text-gray-600">Register new project</p>
-              </button>
-              <button onClick={() => navigate("/forms/conference")} className="p-4 border-2 border-orange-200 rounded-lg hover:border-orange-500 hover:bg-orange-50 transition text-left">
-                <div className="text-3xl mb-2">🎤</div>
-                <h3 className="font-semibold text-gray-900">Add Conference</h3>
-                <p className="text-sm text-gray-600">Submit conference paper</p>
-              </button>
-              <button onClick={() => navigate("/forms/phd-thesis")} className="p-4 border-2 border-teal-200 rounded-lg hover:border-teal-500 hover:bg-teal-50 transition text-left">
-                <div className="text-3xl mb-2">🎓</div>
-                <h3 className="font-semibold text-gray-900">Add PhD Thesis</h3>
-                <p className="text-sm text-gray-600">Register new thesis</p>
-              </button>
-              <button onClick={() => navigate("/forms/patent")} className="p-4 border-2 border-pink-200 rounded-lg hover:border-pink-500 hover:bg-pink-50 transition text-left">
-                <div className="text-3xl mb-2">💡</div>
-                <h3 className="font-semibold text-gray-900">Add Patent</h3>
-                <p className="text-sm text-gray-600">Submit patent application</p>
-              </button>
-              <button onClick={() => navigate("/forms/published-book")} className="p-4 border-2 border-indigo-200 rounded-lg hover:border-indigo-500 hover:bg-indigo-50 transition text-left">
-                <div className="text-3xl mb-2">📚</div>
-                <h3 className="font-semibold text-gray-900">Add Published Book</h3>
-                <p className="text-sm text-gray-600">Submit book/chapter</p>
-              </button>
-              <button onClick={() => navigate("/forms/department-event")} className="p-4 border-2 border-cyan-200 rounded-lg hover:border-cyan-500 hover:bg-cyan-50 transition text-left">
-                <div className="text-3xl mb-2">📅</div>
-                <h3 className="font-semibold text-gray-900">Add Department Event</h3>
-                <p className="text-sm text-gray-600">Create new event</p>
-              </button>
-              <button onClick={() => navigate("/forms/invited-talk")} className="p-4 border-2 border-lime-200 rounded-lg hover:border-lime-500 hover:bg-lime-50 transition text-left">
-                <div className="text-3xl mb-2">🎙️</div>
-                <h3 className="font-semibold text-gray-900">Add Invited Talk</h3>
-                <p className="text-sm text-gray-600">Register invited talk</p>
-              </button>
-              <button onClick={() => navigate("/forms/faculty-award")} className="p-4 border-2 border-amber-200 rounded-lg hover:border-amber-500 hover:bg-amber-50 transition text-left">
-                <div className="text-3xl mb-2">🏆</div>
-                <h3 className="font-semibold text-gray-900">Add Faculty Award</h3>
-                <p className="text-sm text-gray-600">Submit award/recognition</p>
-              </button>
-              <button onClick={() => navigate("/bulk-upload")} className="p-4 border-2 border-yellow-200 rounded-lg hover:border-yellow-500 hover:bg-yellow-50 transition text-left">
-                <div className="text-3xl mb-2">📤</div>
-                <h3 className="font-semibold text-gray-900">Bulk Upload</h3>
-                <p className="text-sm text-gray-600">Import multiple records</p>
-              </button>
-              <button onClick={() => navigate("/change-password")} className="p-4 border-2 border-red-200 rounded-lg hover:border-red-500 hover:bg-red-50 transition text-left">
-                <div className="text-3xl mb-2">🔐</div>
-                <h3 className="font-semibold text-gray-900">Change Password</h3>
-                <p className="text-sm text-gray-600">Update your password</p>
-              </button>
-            </div>
-          )}
+          {dataError && <p className="text-red-500 bg-red-50 p-3 rounded-md mb-4">{dataError}</p>}
 
-          {/* Faculty Quick Actions */}
-          {user?.role === "faculty" && (
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <button onClick={() => navigate("/forms/publication")} className="p-4 border-2 border-green-200 rounded-lg hover:border-green-500 hover:bg-green-50 transition text-left">
-                <div className="text-3xl mb-2">📄</div>
-                <h3 className="font-semibold text-gray-900">Add Publication</h3>
-                <p className="text-sm text-gray-600">Submit new publication</p>
-              </button>
-              <button onClick={() => navigate("/forms/project")} className="p-4 border-2 border-purple-200 rounded-lg hover:border-purple-500 hover:bg-purple-50 transition text-left">
-                <div className="text-3xl mb-2">🔬</div>
-                <h3 className="font-semibold text-gray-900">Add Project</h3>
-                <p className="text-sm text-gray-600">Register new project</p>
-              </button>
-              <button onClick={() => navigate("/forms/conference")} className="p-4 border-2 border-orange-200 rounded-lg hover:border-orange-500 hover:bg-orange-50 transition text-left">
-                <div className="text-3xl mb-2">🎤</div>
-                <h3 className="font-semibold text-gray-900">Add Conference</h3>
-                <p className="text-sm text-gray-600">Submit conference paper</p>
-              </button>
-              <button onClick={() => navigate("/forms/phd-thesis")} className="p-4 border-2 border-teal-200 rounded-lg hover:border-teal-500 hover:bg-teal-50 transition text-left">
-                <div className="text-3xl mb-2">🎓</div>
-                <h3 className="font-semibold text-gray-900">Add PhD Thesis</h3>
-                <p className="text-sm text-gray-600">Register new thesis</p>
-              </button>
-              <button onClick={() => navigate("/forms/patent")} className="p-4 border-2 border-pink-200 rounded-lg hover:border-pink-500 hover:bg-pink-50 transition text-left">
-                <div className="text-3xl mb-2">💡</div>
-                <h3 className="font-semibold text-gray-900">Add Patent</h3>
-                <p className="text-sm text-gray-600">Submit patent application</p>
-              </button>
-              <button onClick={() => navigate("/forms/published-book")} className="p-4 border-2 border-indigo-200 rounded-lg hover:border-indigo-500 hover:bg-indigo-50 transition text-left">
-                <div className="text-3xl mb-2">📚</div>
-                <h3 className="font-semibold text-gray-900">Add Published Book</h3>
-                <p className="text-sm text-gray-600">Submit book/chapter</p>
-              </button>
-              <button onClick={() => navigate("/forms/department-event")} className="p-4 border-2 border-cyan-200 rounded-lg hover:border-cyan-500 hover:bg-cyan-50 transition text-left">
-                <div className="text-3xl mb-2">📅</div>
-                <h3 className="font-semibold text-gray-900">Add Department Event</h3>
-                <p className="text-sm text-gray-600">Create new event</p>
-              </button>
-              <button onClick={() => navigate("/forms/invited-talk")} className="p-4 border-2 border-lime-200 rounded-lg hover:border-lime-500 hover:bg-lime-50 transition text-left">
-                <div className="text-3xl mb-2">🎙️</div>
-                <h3 className="font-semibold text-gray-900">Add Invited Talk</h3>
-                <p className="text-sm text-gray-600">Register invited talk</p>
-              </button>
-              <button onClick={() => navigate("/forms/faculty-award")} className="p-4 border-2 border-amber-200 rounded-lg hover:border-amber-500 hover:bg-amber-50 transition text-left">
-                <div className="text-3xl mb-2">🏆</div>
-                <h3 className="font-semibold text-gray-900">Add Faculty Award</h3>
-                <p className="text-sm text-gray-600">Submit award/recognition</p>
-              </button>
-              <button onClick={() => navigate("/change-password")} className="p-4 border-2 border-red-200 rounded-lg hover:border-red-500 hover:bg-red-50 transition text-left">
-                <div className="text-3xl mb-2">🔐</div>
-                <h3 className="font-semibold text-gray-900">Change Password</h3>
-                <p className="text-sm text-gray-600">Update your password</p>
-              </button>
-            </div>
-          )}
-        </div>
-
-        {/* NEW: My Contributions Section */}
-        <div className="bg-white rounded-lg shadow-md p-6">
-          <h2 className="text-2xl font-bold text-gray-900 mb-6 border-b pb-2">
-            My Contributions history
-          </h2>
-          
-          {dataError && <p className="text-red-500">{dataError}</p>}
-
-          {Object.keys(dashboardData).length === 0 && !dataError ? (
-             <p className="text-gray-500 italic">No contributions found yet.</p>
+          {!hasAnyData && !dataError ? (
+             <p className="text-gray-500 italic p-4 text-center bg-gray-50 rounded-lg">No contributions found yet.</p>
           ) : (
-            Object.entries(dashboardData).map(([categoryName, yearsData]) => (
-              <div key={categoryName} className="mb-8">
-                <h3 className="text-xl font-bold text-blue-700 mb-4 capitalize">
-                  {categoryName}
-                </h3>
+            Object.entries(dashboardData).map(([categoryName, itemsArray]) => {
+              
+              // Skip rendering if this category has no items
+              if (!itemsArray || itemsArray.length === 0) return null;
 
-                {Object.keys(yearsData).length === 0 ? (
-                  <p className="text-gray-500 text-sm italic ml-4">No entries in this category.</p>
-                ) : (
+              // Dynamically group the flat array into years for the UI
+              const yearsData = itemsArray.reduce((acc, item) => {
+                let year = item.year || 
+                           (item.dateSanctioned ? new Date(item.dateSanctioned).getFullYear() : null) || 
+                           (item.date ? new Date(item.date).getFullYear() : null) || 
+                           "Unknown Year";
+                
+                if (!acc[year]) acc[year] = [];
+                acc[year].push(item);
+                return acc;
+              }, {});
+
+              return (
+                <div key={categoryName} className="mb-8 last:mb-0">
+                  <h3 className="text-xl font-bold text-blue-800 mb-4 capitalize">
+                    {/* Adds spaces to camelCase names like phdThesis -> phd Thesis */}
+                    {categoryName.replace(/([A-Z])/g, ' $1').trim()} 
+                  </h3>
+
                   <div className="space-y-4 ml-4">
-                    {/* Sort years descending */}
+                    {/* Sort years descending (newest first) */}
                     {Object.entries(yearsData)
-                      .sort(([yearA], [yearB]) => yearB - yearA)
+                      .sort(([yearA], [yearB]) => {
+                        if (yearA === "Unknown Year") return 1;
+                        if (yearB === "Unknown Year") return -1;
+                        return yearB - yearA;
+                      })
                       .map(([year, items]) => (
-                      <div key={year} className="border-l-4 border-blue-200 pl-4 py-2">
-                        <span className="inline-block bg-blue-50 text-blue-800 font-semibold px-2 py-1 rounded text-sm mb-3">
+                      <div key={year} className="border-l-4 border-blue-300 pl-4 py-2">
+                        <span className="inline-block bg-blue-50 text-blue-800 font-semibold px-2.5 py-1 rounded-md text-sm mb-3">
                           Year: {year}
                         </span>
                         
                         <ul className="space-y-3">
                           {items.map((item, index) => (
-                            <li key={item._id || index} className="bg-gray-50 p-3 rounded border border-gray-100">
-                              <p className="text-gray-900 font-medium">{item.title}</p>
-                              {/* Display specific details based on what exists in the object */}
-                              <p className="text-sm text-gray-500 mt-1">
-                                {item.journal && <span>Journal: {item.journal} | </span>}
-                                {item.conferenceName && <span>Conference: {item.conferenceName} | </span>}
-                                {item.pages && <span>Pages: {item.pages}</span>}
+                            <li key={item._id || index} className="bg-gray-50 p-4 rounded-lg border border-gray-200 hover:shadow-sm transition-shadow">
+                              
+                              {/* Safely grab the title depending on what the schema calls it */}
+                              <p className="text-gray-900 font-semibold text-lg">
+                                {item.title || item.projectTitle || item.paperTitle || item.conferenceName || item.patentTitle || item.bookTitle || item.awardName || item.scholarName || item.eventName || item.topic || "Untitled Record"}
                               </p>
+                              
+                              <div className="text-sm text-gray-600 mt-2 flex flex-wrap gap-4">
+                                {item.journal && <span><strong className="text-gray-500 font-medium">Journal:</strong> {item.journal}</span>}
+                                {item.status && <span><strong className="text-gray-500 font-medium">Status:</strong> {item.status}</span>}
+                                {item.fundingAgency && <span><strong className="text-gray-500 font-medium">Funding Agency:</strong> {item.fundingAgency}</span>}
+                                {item.publisher && <span><strong className="text-gray-500 font-medium">Publisher:</strong> {item.publisher}</span>}
+                              </div>
                             </li>
                           ))}
                         </ul>
                       </div>
                     ))}
                   </div>
-                )}
-              </div>
-            ))
+                </div>
+              );
+            })
           )}
         </div>
       </main>

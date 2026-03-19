@@ -1,11 +1,18 @@
 import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-dom";
 
+// Layout & Security
+import Layout from "./components/layout/Layout";
+import ProtectedRoute from "./components/ProtectedRoute";
+
 // Auth Pages
 import Login from "./pages/auth/Login";
 import ForgotPassword from "./pages/auth/ForgotPassword";
 import ChangePassword from "./pages/auth/ChangePassword";
-import Dashboard from "./pages/Dashboard";
 import ResetPassword from "./pages/auth/ResetPassword";
+
+// App Pages
+import Dashboard from "./pages/Dashboard";
+import QuickActions from "./pages/QuickActions"; // <-- Restored import
 
 // Form Pages
 import FacultyForm from "./pages/forms/FacultyForm";
@@ -20,139 +27,57 @@ import InvitedTalkForm from "./pages/forms/InvitedTalkForm";
 import FacultyAwardForm from "./pages/forms/FacultyAwardForm";
 import BulkUpload from "./pages/bulk/BulkUpload";
 
-// Components
-import ProtectedRoute from "./components/ProtectedRoute";
-
 function App() {
   return (
     <Router>
-      <div className="min-h-screen bg-gray-50">
-        <Routes>
-          {/* Public Routes - Auth Pages */}
-          <Route path="/login" element={<Login />} />
-          <Route path="/forgot-password" element={<ForgotPassword />} />
-          <Route path="/api/v1/auth/resetpassword/:resetToken" element={<ResetPassword />} />
-          {/* Semi-Protected - Change Password */}
-          <Route path="/change-password" element={<ChangePassword />} />
+      <Routes>
+        {/* PUBLIC ROUTES */}
+        <Route path="/login" element={<Login />} />
+        <Route path="/forgot-password" element={<ForgotPassword />} />
+        <Route path="/api/v1/auth/resetpassword/:resetToken" element={<ResetPassword />} />
+        <Route path="/change-password" element={<ChangePassword />} />
 
-          {/* Protected Routes */}
-          <Route 
-            path="/dashboard" 
-            element={
-              <ProtectedRoute>
-                <Dashboard />
-              </ProtectedRoute>
-            } 
-          />
+        {/* PROTECTED ROUTES (Wrapped in Layout with Navbar) */}
+        <Route 
+          element={
+            <ProtectedRoute>
+              <Layout />
+            </ProtectedRoute>
+          }
+        >
+          <Route path="/dashboard" element={<Dashboard />} />
+          
+          {/* Restored Quick Actions Route */}
+          <Route path="/quick-actions" element={<QuickActions />} /> 
+          
+          {/* Forms */}
+          <Route path="/forms/faculty" element={<FacultyForm />} />
+          <Route path="/forms/publication" element={<PublicationForm />} />
+          <Route path="/forms/project" element={<ProjectForm />} />
+          <Route path="/forms/conference" element={<ConferenceForm />} />
+          <Route path="/forms/phd-thesis" element={<PhdThesisForm />} />
+          <Route path="/forms/patent" element={<PatentForm />} />
+          <Route path="/forms/published-book" element={<PublishedBookForm />} />
+          <Route path="/forms/department-event" element={<DepartmentEventForm />} />
+          <Route path="/forms/invited-talk" element={<InvitedTalkForm />} />
+          <Route path="/forms/faculty-award" element={<FacultyAwardForm />} />
+          <Route path="/bulk-upload" element={<BulkUpload />} />
+        </Route>
 
-          {/* Manual Forms - Protected */}
-          <Route 
-            path="/forms/faculty" 
-            element={
-              <ProtectedRoute>
-                <FacultyForm />
-              </ProtectedRoute>
-            } 
-          />
-          <Route 
-            path="/forms/publication" 
-            element={
-              <ProtectedRoute>
-                <PublicationForm />
-              </ProtectedRoute>
-            } 
-          />
-          <Route 
-            path="/forms/project" 
-            element={
-              <ProtectedRoute>
-                <ProjectForm />
-              </ProtectedRoute>
-            } 
-          />
-          <Route 
-            path="/forms/conference" 
-            element={
-              <ProtectedRoute>
-                <ConferenceForm />
-              </ProtectedRoute>
-            } 
-          />
-          <Route 
-            path="/forms/phd-thesis" 
-            element={
-              <ProtectedRoute>
-                <PhdThesisForm />
-              </ProtectedRoute>
-            } 
-          />
-          <Route 
-            path="/forms/patent" 
-            element={
-              <ProtectedRoute>
-                <PatentForm />
-              </ProtectedRoute>
-            } 
-          />
-          <Route 
-            path="/forms/published-book" 
-            element={
-              <ProtectedRoute>
-                <PublishedBookForm />
-              </ProtectedRoute>
-            } 
-          />
-          <Route 
-            path="/forms/department-event" 
-            element={
-              <ProtectedRoute>
-                <DepartmentEventForm />
-              </ProtectedRoute>
-            } 
-          />
-          <Route 
-            path="/forms/invited-talk" 
-            element={
-              <ProtectedRoute>
-                <InvitedTalkForm />
-              </ProtectedRoute>
-            } 
-          />
-          <Route 
-            path="/forms/faculty-award" 
-            element={
-              <ProtectedRoute>
-                <FacultyAwardForm />
-              </ProtectedRoute>
-            } 
-          />
-
-          {/* Bulk Upload - Protected */}
-          <Route 
-            path="/bulk-upload" 
-            element={
-              <ProtectedRoute>
-                <BulkUpload />
-              </ProtectedRoute>
-            } 
-          />
-
-          {/* Redirect root to login or dashboard */}
-          <Route 
-            path="/" 
-            element={
-              localStorage.getItem("token") ? 
-                <Navigate to="/dashboard" replace /> : 
-                <Navigate to="/login" replace />
-            } 
-          />
-
-          {/* Catch all - redirect to login */}
-          <Route path="*" element={<Navigate to="/login" replace />} />
-        </Routes>
-      </div>
+        {/* REDIRECTS */}
+        <Route 
+          path="/" 
+          element={
+            localStorage.getItem("token") ? 
+              <Navigate to="/dashboard" replace /> : 
+              <Navigate to="/login" replace />
+          } 
+        />
+        {/* If route is not found, it triggers this which sends you to login */}
+        <Route path="*" element={<Navigate to="/login" replace />} />
+      </Routes>
     </Router>
   );
 }
 
-export default App;
+export default App; 
