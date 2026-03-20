@@ -44,8 +44,10 @@ export default function Dashboard() {
               });
               
               const dashResult = await dashRes.json();
-              if (dashRes.ok) {
-                setDashboardData(dashResult.data);
+              
+              if (dashRes.ok && dashResult.success) {
+                // Ensure data is set properly even if some arrays are missing
+                setDashboardData(dashResult.data || {});
               } else {
                 setDataError("Could not load your contributions.");
               }
@@ -86,8 +88,8 @@ export default function Dashboard() {
     );
   }
 
-  // Helper to check if dashboard is entirely empty
-  const hasAnyData = Object.values(dashboardData).some(arr => arr && arr.length > 0);
+  // Helper to check if dashboard has ANY data across all categories
+  const hasAnyData = Object.values(dashboardData).some(arr => Array.isArray(arr) && arr.length > 0);
 
   return (
     <div className="bg-transparent">
@@ -138,35 +140,46 @@ export default function Dashboard() {
           ) : (
             Object.entries(dashboardData).map(([categoryName, itemsArray]) => {
               
-              // Skip rendering if this category has no items
-              if (!itemsArray || itemsArray.length === 0) return null;
+              // Skip rendering if this category is missing, not an array, or empty
+              if (!itemsArray || !Array.isArray(itemsArray) || itemsArray.length === 0) return null;
 
               // Dynamically group the flat array into years for the UI
               const yearsData = itemsArray.reduce((acc, item) => {
-                let year = item.year || 
-                           (item.dateSanctioned ? new Date(item.dateSanctioned).getFullYear() : null) || 
-                           (item.date ? new Date(item.date).getFullYear() : null) || 
-                           "Unknown Year";
+                // Extremely safe year extraction
+                let extractedYear = "Unknown Year";
                 
-                if (!acc[year]) acc[year] = [];
-                acc[year].push(item);
+                if (item.year && !isNaN(item.year)) {
+                  extractedYear = item.year.toString();
+                } else if (item.dateSanctioned) {
+                  const d = new Date(item.dateSanctioned);
+                  if (!isNaN(d.getTime())) extractedYear = d.getFullYear().toString();
+                } else if (item.date) {
+                  const d = new Date(item.date);
+                  if (!isNaN(d.getTime())) extractedYear = d.getFullYear().toString();
+                } else if (item.createdAt) {
+                  const d = new Date(item.createdAt);
+                  if (!isNaN(d.getTime())) extractedYear = d.getFullYear().toString();
+                }
+                
+                if (!acc[extractedYear]) acc[extractedYear] = [];
+                acc[extractedYear].push(item);
                 return acc;
               }, {});
 
               return (
                 <div key={categoryName} className="mb-8 last:mb-0">
                   <h3 className="text-xl font-bold text-blue-800 mb-4 capitalize">
-                    {/* Adds spaces to camelCase names like phdThesis -> phd Thesis */}
-                    {categoryName.replace(/([A-Z])/g, ' $1').trim()} 
+                    {/* Formats camelCase names cleanly (e.g. phdThesis -> Phd Thesis) */}
+                    {categoryName.replace(/([A-Z])/g, ' $1').trim()}
                   </h3>
 
                   <div className="space-y-4 ml-4">
-                    {/* Sort years descending (newest first) */}
+                    {/* Sort years descending (newest first) safely */}
                     {Object.entries(yearsData)
                       .sort(([yearA], [yearB]) => {
                         if (yearA === "Unknown Year") return 1;
                         if (yearB === "Unknown Year") return -1;
-                        return yearB - yearA;
+                        return parseInt(yearB) - parseInt(yearA);
                       })
                       .map(([year, items]) => (
                       <div key={year} className="border-l-4 border-blue-300 pl-4 py-2">
@@ -178,7 +191,6 @@ export default function Dashboard() {
                           {items.map((item, index) => (
                             <li key={item._id || index} className="bg-gray-50 p-4 rounded-lg border border-gray-200 hover:shadow-sm transition-shadow">
                               
-                              {/* Safely grab the title depending on what the schema calls it */}
                               <p className="text-gray-900 font-semibold text-lg">
                                 {item.title || item.projectTitle || item.paperTitle || item.conferenceName || item.patentTitle || item.bookTitle || item.awardName || item.scholarName || item.eventName || item.topic || "Untitled Record"}
                               </p>

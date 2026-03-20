@@ -3,12 +3,11 @@ import config from "../../config";
 
 export default function PhdThesisForm() {
   const [form, setForm] = useState({
-    name: "",
-    studentId: "",
-    topic: "",
-    supervisor: "",
-    coSupervisor: "",
-    yearAwarded: new Date().getFullYear()
+    scholarName: "",
+    thesisTitle: "",
+    supervisor: "", // This must match your profile name to show on dashboard
+    year: new Date().getFullYear(),
+    status: "Ongoing"
   });
 
   const handleChange = (e) => {
@@ -17,30 +16,27 @@ export default function PhdThesisForm() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    const token = localStorage.getItem("token"); // Get token
 
     try {
       const res = await fetch(`${config.API_BASE_URL}/api/v1/phdThesis`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: { 
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${token}` // CRITICAL: Auth header added
+        },
         body: JSON.stringify({
           ...form,
-          yearAwarded: parseInt(form.yearAwarded)
+          year: parseInt(form.year)
         }),
       });
 
       if (res.ok) {
-        alert("PhD Thesis added successfully!");
-        setForm({
-          name: "",
-          studentId: "",
-          topic: "",
-          supervisor: "",
-          coSupervisor: "",
-          yearAwarded: new Date().getFullYear()
-        });
+        alert("PhD Thesis record added successfully!");
+        setForm({ scholarName: "", thesisTitle: "", supervisor: "", year: new Date().getFullYear(), status: "Ongoing" });
       } else {
         const errorData = await res.json();
-        alert(errorData.error || "Error adding PhD thesis");
+        alert(errorData.message || "Error adding PhD thesis");
       }
     } catch (err) {
       alert("Network error");
@@ -49,75 +45,28 @@ export default function PhdThesisForm() {
   };
 
   return (
-    <form onSubmit={handleSubmit} className="max-w-2xl mx-auto p-6 bg-white rounded-xl shadow-md">
-      <h2 className="text-2xl font-bold mb-6">Add PhD Thesis</h2>
+    <form onSubmit={handleSubmit} className="max-w-2xl mx-auto p-6 bg-white rounded-xl shadow-md mt-6">
+      <h2 className="text-2xl font-bold mb-2">Add PhD Thesis</h2>
+      <p className="text-sm text-gray-500 mb-6">
+        Note: Type your name <strong>exactly</strong> as it appears in your profile in the Supervisor field to link this to your dashboard.
+      </p>
 
-      <input
-        type="text"
-        name="name"
-        placeholder="Student Name"
-        value={form.name}
-        onChange={handleChange}
-        className="w-full mb-3 p-2 border rounded"
-        required
-      />
+      <input type="text" name="scholarName" placeholder="Scholar Name" value={form.scholarName} onChange={handleChange} className="w-full mb-3 p-2 border rounded" required />
+      <input type="text" name="thesisTitle" placeholder="Thesis Title" value={form.thesisTitle} onChange={handleChange} className="w-full mb-3 p-2 border rounded" required />
+      <input type="text" name="supervisor" placeholder="Supervisor Name" value={form.supervisor} onChange={handleChange} className="w-full mb-3 p-2 border rounded" required />
+      <input type="number" name="year" placeholder="Year" value={form.year} onChange={handleChange} className="w-full mb-3 p-2 border rounded" required />
 
-      <input
-        type="text"
-        name="studentId"
-        placeholder="Student ID"
-        value={form.studentId}
-        onChange={handleChange}
-        className="w-full mb-3 p-2 border rounded"
-        required
-      />
+      <div className="mb-4">
+        <label className="block text-sm font-medium mb-1">Status</label>
+        <select name="status" value={form.status} onChange={handleChange} className="w-full p-2 border rounded" required>
+          <option value="Ongoing">Ongoing</option>
+          <option value="Completed">Completed</option>
+          <option value="Awarded">Awarded</option>
+        </select>
+      </div>
 
-      <textarea
-        name="topic"
-        placeholder="Thesis Topic"
-        value={form.topic}
-        onChange={handleChange}
-        className="w-full mb-3 p-2 border rounded"
-        rows="3"
-        required
-      />
-
-      <input
-        type="text"
-        name="supervisor"
-        placeholder="Supervisor Name"
-        value={form.supervisor}
-        onChange={handleChange}
-        className="w-full mb-3 p-2 border rounded"
-        required
-      />
-
-      <input
-        type="text"
-        name="coSupervisor"
-        placeholder="Co-Supervisor Name (optional)"
-        value={form.coSupervisor}
-        onChange={handleChange}
-        className="w-full mb-3 p-2 border rounded"
-      />
-
-      <input
-        type="number"
-        name="yearAwarded"
-        placeholder="Year Awarded"
-        value={form.yearAwarded}
-        onChange={handleChange}
-        className="w-full mb-3 p-2 border rounded"
-        min="1990"
-        max={new Date().getFullYear() + 5}
-        required
-      />
-
-      <button
-        type="submit"
-        className="w-full bg-green-500 text-white px-4 py-2 rounded hover:bg-green-600"
-      >
-        Submit
+      <button type="submit" className="w-full bg-blue-600 text-white font-medium px-4 py-2.5 rounded hover:bg-blue-700 transition-colors">
+        Submit Thesis
       </button>
     </form>
   );
