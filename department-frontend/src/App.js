@@ -13,6 +13,7 @@ import ResetPassword from "./pages/auth/ResetPassword";
 // App Pages
 import Dashboard from "./pages/Dashboard";
 import QuickActions from "./pages/QuickActions"; // <-- Restored import
+import Analytics from "./pages/Analytics";
 
 // Form Pages
 import FacultyForm from "./pages/forms/FacultyForm";
@@ -46,7 +47,7 @@ function App() {
           }
         >
           <Route path="/dashboard" element={<Dashboard />} />
-          
+          <Route path="/analytics" element={<Analytics />} />
           {/* Restored Quick Actions Route */}
           <Route path="/quick-actions" element={<QuickActions />} /> 
           

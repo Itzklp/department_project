@@ -2,8 +2,12 @@ import { useState, useEffect } from "react";
 // 1. Import CreatableSelect instead of standard Select
 import CreatableSelect from "react-select/creatable"; 
 import config from "../../config";
+import { ArrowLeft } from "lucide-react";
+import { toast } from "react-hot-toast";
+import { useNavigate } from "react-router-dom";
 
 export default function PublicationForm() {
+  const navigate = useNavigate();
   const [form, setForm] = useState({
     title: "",
     authors: [],
@@ -17,6 +21,7 @@ export default function PublicationForm() {
 
   const [facultyOptions, setFacultyOptions] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   useEffect(() => {
     const fetchFaculty = async () => {
@@ -58,52 +63,46 @@ export default function PublicationForm() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-
-    if (form.authors.length === 0) {
-      alert("Please select or type at least one author.");
-      return;
-    }
-
-    // This perfectly extracts the ObjectId for faculty OR the String name for external authors
-    const authorValues = form.authors.map(author => author.value);
+    setIsSubmitting(true);
     const token = localStorage.getItem("token");
 
     try {
-      const pubRes = await fetch(`${config.API_BASE_URL}/api/v1/publication`, {
+      const res = await fetch(`${config.API_BASE_URL}/api/v1/publication`, {
         method: "POST",
         headers: { 
           "Content-Type": "application/json",
-          "Authorization": `Bearer ${token}`
+          "Authorization": `Bearer ${token}` 
         },
-        body: JSON.stringify({
-          title: form.title,
-          authors: authorValues, // Sends a mix of IDs and strings to backend
-          year: parseInt(form.year),
-          journal: form.journal,
-          volume: form.volume,
-          issue: form.issue,
-          pages: form.pages,
-          doi: form.doi
-        }),
+        body: JSON.stringify(form),
       });
 
-      if (pubRes.ok) {
-        alert("Publication added successfully!");
-        setForm({ 
-          title: "", authors: [], year: "", journal: "",
-          volume: "", issue: "", pages: "", doi: ""
-        });
+      const data = await res.json();
+
+      if (res.ok) {
+        toast.success("Publication added successfully!");
+        navigate('/quick-actions'); // <-- Redirects on success!
       } else {
-        const errorData = await pubRes.json();
-        alert(`Error: ${errorData.message || errorData.error || 'Failed to add publication'}`);
+        toast.error(data.message || "Failed to add publication.");
+        // We do NOT navigate away here so they don't lose their typed data!
       }
     } catch (err) {
       console.error(err);
-      alert("A network error occurred.");
+      toast.error("Network error.");
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
   return (
+    <div className="max-w-3xl mx-auto p-4 mt-6">
+    <button 
+        type="button" 
+        onClick={() => navigate('/quick-actions')}
+        className="flex items-center gap-2 text-gray-500 hover:text-blue-600 mb-4 font-medium transition-colors"
+      >
+        <ArrowLeft className="w-5 h-5" />
+        Back to Quick Actions
+      </button>
     <form onSubmit={handleSubmit} className="max-w-2xl mx-auto p-6 bg-white rounded-xl shadow-md mt-6">
       <h2 className="text-2xl font-bold mb-2">Add Publication</h2>
       <p className="text-sm text-gray-500 mb-6">
@@ -144,5 +143,6 @@ export default function PublicationForm() {
         Submit Publication
       </button>
     </form>
+    </div>
   );
 }

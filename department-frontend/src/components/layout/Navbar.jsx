@@ -40,11 +40,14 @@ const Navbar = () => {
             </Link>
           </div>
 
+      
           <div className="hidden sm:flex sm:items-center sm:space-x-8">
             <NavLink to="/dashboard" className={navLinkClass}>
               Dashboard
             </NavLink>
-            
+            <NavLink to="/analytics" className={navLinkClass}>
+              Analytics
+            </NavLink>
             {/* Restored Quick Actions Tab */}
             <NavLink to="/quick-actions" className={navLinkClass}>
               Quick Actions

@@ -1,63 +1,74 @@
 import React from 'react';
-import { useNavigate } from 'react-router-dom';
-import { BookOpen, FileText, Award, Calendar, Mic, Briefcase, GraduationCap, Users } from 'lucide-react';
+import { Link } from 'react-router-dom';
+import { 
+  FileText, Briefcase, Users, GraduationCap, 
+  Lightbulb, BookOpen, Calendar, Mic, Award, Upload, ShieldCheck 
+} from 'lucide-react';
 
-export default function QuickActions() {
-  const navigate = useNavigate();
-  // Fetch the role from local storage (set during login)
-  const userRole = localStorage.getItem("role"); 
+const QuickActions = () => {
+  const userRole = localStorage.getItem("role");
 
-  // Standard actions for everyone
   const actions = [
-    { title: "Add Publication", icon: BookOpen, path: "/forms/publication", color: "bg-blue-100 text-blue-600" },
-    { title: "Add Project", icon: Briefcase, path: "/forms/project", color: "bg-green-100 text-green-600" },
-    { title: "Add Conference", icon: Mic, path: "/forms/conference", color: "bg-purple-100 text-purple-600" },
-    { title: "Add Faculty Award", icon: Award, path: "/forms/faculty-award", color: "bg-yellow-100 text-yellow-600" },
-    { title: "Add Event", icon: Calendar, path: "/forms/department-event", color: "bg-pink-100 text-pink-600" },
-    { title: "Add PhD Thesis", icon: GraduationCap, path: "/forms/phd-thesis", color: "bg-indigo-100 text-indigo-600" },
-    { title: "Add Patent", icon: FileText, path: "/forms/patent", color: "bg-teal-100 text-teal-600" },
-    { title: "Add Published Book", icon: BookOpen, path: "/forms/published-book", color: "bg-orange-100 text-orange-600" },
-    { title: "Add Invited Talk", icon: Mic, path: "/forms/invited-talk", color: "bg-red-100 text-red-600" },
+    { title: 'Add Publication', desc: 'Log new research papers, journals, and articles to the database.', icon: FileText, path: '/forms/publication', color: 'text-blue-600', bg: 'bg-blue-50' },
+    { title: 'Add Project', desc: 'Record new funding, consultancy, or national research projects.', icon: Briefcase, path: '/forms/project', color: 'text-indigo-600', bg: 'bg-indigo-50' },
+    { title: 'Add Conference', desc: 'Register conferences attended, organized, or presented at.', icon: Users, path: '/forms/conference', color: 'text-emerald-600', bg: 'bg-emerald-50' },
+    { title: 'Add PhD Thesis', desc: 'Add new supervised student thesis records to your profile.', icon: GraduationCap, path: '/forms/phd-thesis', color: 'text-purple-600', bg: 'bg-purple-50' },
+    { title: 'Add Patent', desc: 'File new applications or record officially granted patents.', icon: Lightbulb, path: '/forms/patent', color: 'text-amber-600', bg: 'bg-amber-50' },
+    { title: 'Add Published Book', desc: 'Register published books or individual textbook chapters.', icon: BookOpen, path: '/forms/published-book', color: 'text-orange-600', bg: 'bg-orange-50' },
+    { title: 'Add Event', desc: 'Log department events, hosted workshops, or seminars.', icon: Calendar, path: '/forms/department-event', color: 'text-rose-600', bg: 'bg-rose-50' },
+    { title: 'Add Invited Talk', desc: 'Record guest lectures, keynote speeches, or expert talks.', icon: Mic, path: '/forms/invited-talk', color: 'text-cyan-600', bg: 'bg-cyan-50' },
+    { title: 'Add Award', desc: 'Register new honors, recognitions, or faculty achievements.', icon: Award, path: '/forms/faculty-award', color: 'text-yellow-600', bg: 'bg-yellow-50' },
+    { title: 'Bulk Upload', desc: 'Import multiple records instantly via CSV or Excel sheets.', icon: Upload, path: '/bulk-upload', color: 'text-gray-600', bg: 'bg-gray-100' },
   ];
 
-  // 🔥 ADMIN ONLY: Inject the Faculty Creation card at the top
+  // 🔥 Inject Admin Card if they have the correct role
   if (userRole === "admin") {
     actions.unshift({
       title: "Add New Faculty",
-      icon: Users,
+      desc: "Generate public profile and create secure user login credentials.",
+      icon: ShieldCheck,
       path: "/forms/faculty",
-      color: "bg-slate-800 text-white shadow-md border-2 border-slate-900", // Stands out visually
-      description: "Create profile & generate login"
+      color: "text-white",
+      bg: "bg-slate-800"
     });
   }
 
   return (
     <div className="max-w-7xl mx-auto px-4 py-8">
-      <h1 className="text-3xl font-bold text-gray-900 mb-2">Quick Actions</h1>
-      <p className="text-gray-500 mb-8">Select a category to add new records to the department database.</p>
-      
+      <div className="mb-8 border-b border-gray-200 pb-4">
+        <h1 className="text-3xl font-bold text-gray-900">Quick Actions</h1>
+        <p className="text-gray-500 mt-1">Select an operation below to add new records directly to the department database.</p>
+      </div>
+
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
         {actions.map((action, index) => {
           const Icon = action.icon;
+          // Apply a special border if it's the Admin card
+          const borderStyle = action.bg === 'bg-slate-800' ? 'border-2 border-slate-800 shadow-md' : 'border border-gray-200 shadow-sm';
+          
           return (
-            <button
-              key={index}
-              onClick={() => navigate(action.path)}
-              className="flex items-center p-6 bg-white rounded-xl shadow-sm border border-gray-200 hover:shadow-md hover:border-blue-300 transition-all text-left group focus:outline-none focus:ring-2 focus:ring-blue-500"
+            <Link 
+              key={index} 
+              to={action.path}
+              className={`group bg-white p-6 rounded-xl ${borderStyle} hover:shadow-lg hover:border-blue-400 transition-all duration-200 flex flex-col items-start gap-4`}
             >
-              <div className={`p-4 rounded-lg mr-4 transition-transform group-hover:scale-110 ${action.color}`}>
-                <Icon className="w-6 h-6" />
+              <div className={`p-4 rounded-lg ${action.bg} ${action.color} group-hover:scale-110 transition-transform duration-200`}>
+                <Icon className="w-7 h-7" />
               </div>
               <div>
-                <h3 className="text-lg font-bold text-gray-900 group-hover:text-blue-600 transition-colors">
+                <h3 className="text-lg font-bold text-gray-900 group-hover:text-blue-700 transition-colors">
                   {action.title}
                 </h3>
-                {action.description && <p className="text-xs text-gray-500 mt-1">{action.description}</p>}
+                <p className="text-sm text-gray-500 mt-2 leading-relaxed font-medium">
+                  {action.desc}
+                </p>
               </div>
-            </button>
+            </Link>
           );
         })}
       </div>
     </div>
   );
-}
+};
+
+export default QuickActions;
