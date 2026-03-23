@@ -27,6 +27,7 @@ import DepartmentEventForm from "./pages/forms/DepartmentEventForm";
 import InvitedTalkForm from "./pages/forms/InvitedTalkForm";
 import FacultyAwardForm from "./pages/forms/FacultyAwardForm";
 import BulkUpload from "./pages/bulk/BulkUpload";
+import ManageUsers from "./pages/ManageUsers";
 
 function App() {
   return (
@@ -53,6 +54,7 @@ function App() {
           
           {/* Forms */}
           <Route path="/forms/faculty" element={<FacultyForm />} />
+          <Route path="/manage-users" element={<ManageUsers />} />
           <Route path="/forms/publication" element={<PublicationForm />} />
           <Route path="/forms/project" element={<ProjectForm />} />
           <Route path="/forms/conference" element={<ConferenceForm />} />

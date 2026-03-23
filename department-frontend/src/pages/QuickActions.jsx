@@ -2,7 +2,7 @@ import React from 'react';
 import { Link } from 'react-router-dom';
 import { 
   FileText, Briefcase, Users, GraduationCap, 
-  Lightbulb, BookOpen, Calendar, Mic, Award, Upload, ShieldCheck 
+  Lightbulb, BookOpen, Calendar, Mic, Award, Upload, ShieldCheck, UserCog // <-- Added UserCog
 } from 'lucide-react';
 
 const QuickActions = () => {
@@ -21,8 +21,19 @@ const QuickActions = () => {
     { title: 'Bulk Upload', desc: 'Import multiple records instantly via CSV or Excel sheets.', icon: Upload, path: '/bulk-upload', color: 'text-gray-600', bg: 'bg-gray-100' },
   ];
 
-  // 🔥 Inject Admin Card if they have the correct role
+  // 🔥 Inject Admin Cards if they have the correct role
   if (userRole === "admin") {
+    // Add Manage Users Card
+    actions.unshift({
+      title: "Manage Users",
+      desc: "View users, update roles, and manage system access.",
+      icon: UserCog,
+      path: "/manage-users",
+      color: "text-white",
+      bg: "bg-blue-800"
+    });
+    
+    // Add New Faculty Card
     actions.unshift({
       title: "Add New Faculty",
       desc: "Generate public profile and create secure user login credentials.",
@@ -43,8 +54,7 @@ const QuickActions = () => {
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
         {actions.map((action, index) => {
           const Icon = action.icon;
-          // Apply a special border if it's the Admin card
-          const borderStyle = action.bg === 'bg-slate-800' ? 'border-2 border-slate-800 shadow-md' : 'border border-gray-200 shadow-sm';
+          const borderStyle = 'border border-gray-200 shadow-sm';
           
           return (
             <Link 
