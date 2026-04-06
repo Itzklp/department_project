@@ -26,21 +26,23 @@ const Navbar = () => {
           
           <div className="flex items-center">
             <Link to="/dashboard" className="flex items-center gap-3">
-              <div className="w-10 h-10 bg-blue-900 text-white flex items-center justify-center rounded-sm font-bold text-xs">
-                BITS
-              </div>
+              {/* UPDATED: Replaced div placeholder with actual img tag */}
+              <img 
+                src="/1200px-BITS_Pilani-Logo.svg.png" 
+                alt="BITS Pilani Logo" 
+                className="h-12 w-auto object-contain"
+              />
               <div className="flex flex-col justify-center">
                 <span className="text-lg font-bold text-gray-900 leading-tight tracking-tight">
                   BITS Pilani
                 </span>
                 <span className="text-sm font-medium text-blue-800 leading-tight">
-                  CSIS Department
+                  CISIS Department
                 </span>
               </div>
             </Link>
           </div>
 
-      
           <div className="hidden sm:flex sm:items-center sm:space-x-8">
             <NavLink to="/dashboard" className={navLinkClass}>
               Dashboard
@@ -48,7 +50,6 @@ const Navbar = () => {
             <NavLink to="/analytics" className={navLinkClass}>
               Analytics
             </NavLink>
-            {/* Restored Quick Actions Tab */}
             <NavLink to="/quick-actions" className={navLinkClass}>
               Quick Actions
             </NavLink>

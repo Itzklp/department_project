@@ -1,9 +1,10 @@
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useCallback, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { Edit2, Trash2, ChevronDown, ChevronRight, LayoutList, FolderOpen, Search, Filter, Download, BarChart2, PieChart as PieIcon, IndianRupee } from "lucide-react";
 import { toast } from "react-hot-toast";
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
+import * as XLSX from "xlsx";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, Legend, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
 import config from "../config";
 
@@ -24,7 +25,6 @@ const apiEndpoints = {
   patents: "patent", books: "publishedBook", events: "departmentEvent", talks: "invitedTalk", awards: "facultyAward"
 };
 
-// 🔥 Added Analytics to the beginning of the tabs!
 const adminTabs = [
   { id: 'publications', label: 'Publications' }, { id: 'projects', label: 'Projects' },
   { id: 'conferences', label: 'Conferences' }, { id: 'phdThesis', label: 'PhD Thesis' },
@@ -46,9 +46,11 @@ export default function Dashboard() {
   const [expandedCategories, setExpandedCategories] = useState({});
   const [activeAdminTab, setActiveAdminTab] = useState('publications');
 
-  // Filter States
+  // Filter & Export States
   const [searchTerm, setSearchTerm] = useState("");
   const [filterYear, setFilterYear] = useState("All");
+  const [exportDropdownOpen, setExportDropdownOpen] = useState(null);
+  const dropdownRef = useRef(null); // Used to detect clicks outside the dropdown
 
   // Modals State
   const [deleteConfig, setDeleteConfig] = useState({ isOpen: false, id: null, category: null, isDeleting: false });
@@ -61,6 +63,17 @@ export default function Dashboard() {
     localStorage.removeItem("role");
     navigate("/login");
   }, [navigate]);
+
+  // Close dropdown if clicked outside
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
+        setExportDropdownOpen(null);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
 
   useEffect(() => {
     const fetchAllData = async () => {
@@ -85,7 +98,6 @@ export default function Dashboard() {
               
               if (dashRes.ok && dashResult.success) {
                 setDashboardData(dashResult.data || {});
-                // 🔥 Grant elevated UI if backend confirms Admin or HOD
                 setHasElevatedAccess(dashResult.isAdminOrHOD);
               } else setDataError("Could not load your contributions.");
             } catch (err) { setDataError("Network error while loading contributions."); }
@@ -142,6 +154,30 @@ export default function Dashboard() {
     }, {});
   };
 
+  // --- EXPORT CONFIGURATIONS ---
+  const getExportConfigs = () => ({
+    publications: { cols: ["Year", "Title", "Authors", "Journal", "Vol/Iss/Pg", "DOI"], mapRow: (item, yr) => [yr, item.title, Array.isArray(item.authors) ? item.authors.join(", ") : item.authors, item.journal, `Vol: ${item.volume||'-'}, Iss: ${item.issue||'-'}, Pg: ${item.pages||'-'}`, item.doi||'-'] },
+    projects: { cols: ["Year", "Project Title", "Funding Agency", "Collaborators", "Total INR", "Type/Status"], mapRow: (item, yr) => [yr, item.projectTitle, item.fundingAgency, item.collaborator, item.totalINR?.toLocaleString('en-IN') || '-', `${item.type||'-'} / ${item.status||'-'}`] },
+    conferences: { cols: ["Year", "Paper Title", "Conference Name", "Authors", "Publisher", "Location"], mapRow: (item, yr) => [yr, item.title, item.conferenceName, Array.isArray(item.authors) ? item.authors.join(", ") : item.authors, item.publisher||'-', item.location||'-'] },
+    awards: { cols: ["Year", "Award Title", "Faculty Name", "Organization", "Journal Info", "Category"], mapRow: (item, yr) => [yr, item.title, item.facultyName, item.organization, item.journalInfo||'-', item.category||'-'] },
+    events: { cols: ["Date", "Event Title", "Coordinators", "Type", "Organized By", "Description"], mapRow: (item, yr) => [item.date ? item.date.split('T')[0] : yr, item.title, Array.isArray(item.coordinators) ? item.coordinators.join(", ") : item.coordinators, item.type, item.organizedBy, item.description||'-'] },
+    books: { cols: ["Year", "Book Title", "Author", "Type", "Publisher", "Series", "Link"], mapRow: (item, yr) => [yr, item.title, item.author, item.type, item.publisher, item.series||'-', item.link||'-'] },
+    phdThesis: { 
+      cols: ["Year", "Thesis Title", "Scholar Name", "Supervisor", "Fellowship", "Status", "DOJ", "Proposal", "Qualified", "Pre-Sub", "Thesis-Sub", "Viva"], 
+      mapRow: (item, yr) => {
+        const fDate = (d) => d ? d.split('T')[0] : '-';
+        return [
+          yr, item.thesisTitle, item.scholarName, item.supervisor, 
+          item.fellowshipProgram || '-', item.status, 
+          fDate(item.dateOfJoining), fDate(item.dateOfProposal), fDate(item.dateOfPhdQualified), 
+          fDate(item.dateOfPreSubmission), fDate(item.dateOfThesisSubmission), fDate(item.dateOfVivaVoce)
+        ];
+      }
+    },
+    patents: { cols: ["Filing Date", "Patent Title", "Inventors", "Application No.", "Country", "Status"], mapRow: (item, yr) => [item.filingDate ? item.filingDate.split('T')[0] : yr, item.title, Array.isArray(item.authors) ? item.authors.join(", ") : item.authors, item.applicationNumber, item.country, item.status] },
+    talks: { cols: ["Date", "Talk Title", "Speaker", "Venue", "Description"], mapRow: (item, yr) => [item.date ? item.date.split('T')[0] : yr, item.title, item.speaker, item.venue, item.description||'-'] }
+  });
+
   // --- PDF EXPORT ---
   const exportToPDF = (categoryName, filteredItems) => {
     if (filteredItems.length === 0) return toast.error("No data to export!");
@@ -154,19 +190,7 @@ export default function Dashboard() {
     if (searchTerm) doc.text(`Search Filter: "${searchTerm}"`, 14, 40);
     if (filterYear !== "All") doc.text(`Year Filter: ${filterYear}`, 14, 46);
 
-    const pdfConfigs = {
-      publications: { cols: ["Year", "Title", "Authors", "Journal", "Vol/Iss/Pg", "DOI"], mapRow: (item, yr) => [yr, item.title, Array.isArray(item.authors) ? item.authors.join(", ") : item.authors, item.journal, `Vol: ${item.volume||'-'}, Iss: ${item.issue||'-'}, Pg: ${item.pages||'-'}`, item.doi||'-'] },
-      projects: { cols: ["Year", "Project Title", "Funding Agency", "Collaborators", "Total INR", "Type/Status"], mapRow: (item, yr) => [yr, item.projectTitle, item.fundingAgency, item.collaborator, item.totalINR?.toLocaleString('en-IN') || '-', `${item.type||'-'} / ${item.status||'-'}`] },
-      conferences: { cols: ["Year", "Paper Title", "Conference Name", "Authors", "Publisher", "Location"], mapRow: (item, yr) => [yr, item.title, item.conferenceName, Array.isArray(item.authors) ? item.authors.join(", ") : item.authors, item.publisher||'-', item.location||'-'] },
-      awards: { cols: ["Year", "Award Title", "Faculty Name", "Organization", "Journal Info", "Category"], mapRow: (item, yr) => [yr, item.title, item.facultyName, item.organization, item.journalInfo||'-', item.category||'-'] },
-      events: { cols: ["Date", "Event Title", "Coordinators", "Type", "Organized By", "Description"], mapRow: (item, yr) => [item.date ? item.date.split('T')[0] : yr, item.title, Array.isArray(item.coordinators) ? item.coordinators.join(", ") : item.coordinators, item.type, item.organizedBy, item.description||'-'] },
-      books: { cols: ["Year", "Book Title", "Author", "Type", "Publisher", "Series", "Link"], mapRow: (item, yr) => [yr, item.title, item.author, item.type, item.publisher, item.series||'-', item.link||'-'] },
-      phdThesis: { cols: ["Year", "Thesis Title", "Scholar Name", "Supervisor", "Status"], mapRow: (item, yr) => [yr, item.thesisTitle, item.scholarName, item.supervisor, item.status] },
-      patents: { cols: ["Filing Date", "Patent Title", "Inventors", "Application No.", "Country", "Status"], mapRow: (item, yr) => [item.filingDate ? item.filingDate.split('T')[0] : yr, item.title, Array.isArray(item.authors) ? item.authors.join(", ") : item.authors, item.applicationNumber, item.country, item.status] },
-      talks: { cols: ["Date", "Talk Title", "Speaker", "Venue", "Description"], mapRow: (item, yr) => [item.date ? item.date.split('T')[0] : yr, item.title, item.speaker, item.venue, item.description||'-'] }
-    };
-
-    const config = pdfConfigs[categoryName];
+    const config = getExportConfigs()[categoryName];
     const tableColumn = config ? config.cols : ["Year", "Title", "Details", "Status"];
     const tableRows = filteredItems.map(item => [getExtractedYear(item), ...(config ? config.mapRow(item, getExtractedYear(item)).slice(1) : [item.title || "Untitled", JSON.stringify(item), item.status || "N/A"])]);
 
@@ -180,24 +204,90 @@ export default function Dashboard() {
     toast.success("Detailed PDF Exported Successfully!");
   };
 
+  // --- EXCEL EXPORT ---
+  const exportToExcel = (categoryName, filteredItems) => {
+    if (filteredItems.length === 0) return toast.error("No data to export!");
+    
+    const config = getExportConfigs()[categoryName];
+    
+    const dataToExport = filteredItems.map(item => {
+      const yr = getExtractedYear(item);
+      if (config) {
+        const rowArray = config.mapRow(item, yr);
+        const rowObject = {};
+        config.cols.forEach((colName, index) => {
+          rowObject[colName] = rowArray[index];
+        });
+        return rowObject;
+      } else {
+        const cleanItem = { ...item, Year: yr };
+        delete cleanItem._id;
+        delete cleanItem.__v;
+        delete cleanItem.userId;
+        return cleanItem;
+      }
+    });
+
+    const ws = XLSX.utils.json_to_sheet(dataToExport);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, categoryName.substring(0, 31)); 
+    XLSX.writeFile(wb, `CISIS_${categoryName}_Report.xlsx`);
+    toast.success("Excel Exported Successfully!");
+  };
+
   const renderFilterBar = (categoryName, currentItems) => {
     const allYears = [...new Set(currentItems.map(getExtractedYear))].sort((a, b) => b - a);
     return (
-      <div className="flex flex-col sm:flex-row justify-between items-center gap-4 bg-slate-50 p-4 rounded-lg border border-slate-200 mb-6">
-        <div className="flex flex-1 items-center gap-3 w-full">
-          <div className="relative flex-1 max-w-md">
+      <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4 bg-slate-50 p-4 rounded-lg border border-slate-200 mb-6">
+        <div className="flex flex-1 flex-col sm:flex-row items-center gap-3 w-full">
+          <div className="relative flex-1 w-full max-w-md">
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
             <input type="text" placeholder="Search by title, author, journal..." value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} className="w-full pl-9 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none text-sm" />
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 w-full sm:w-auto">
             <Filter className="w-4 h-4 text-gray-500" />
-            <select value={filterYear} onChange={(e) => setFilterYear(e.target.value)} className="py-2 px-3 border border-gray-300 rounded-lg outline-none text-sm bg-white">
+            <select value={filterYear} onChange={(e) => setFilterYear(e.target.value)} className="w-full sm:w-auto py-2 px-3 border border-gray-300 rounded-lg outline-none text-sm bg-white">
               <option value="All">All Years</option>
               {allYears.map(y => <option key={y} value={y}>{y}</option>)}
             </select>
           </div>
         </div>
-        <button onClick={() => exportToPDF(categoryName, getFilteredItems(currentItems))} className="flex items-center gap-2 bg-slate-800 hover:bg-slate-900 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors w-full sm:w-auto justify-center"><Download className="w-4 h-4" /> Export PDF</button>
+        
+        {/* EXPORT BUTTONS CONTAINER - DROPDOWN MENU */}
+        <div className="relative flex items-center w-full lg:w-auto" ref={dropdownRef}>
+          <button 
+            onClick={(e) => {
+              e.stopPropagation();
+              setExportDropdownOpen(exportDropdownOpen === categoryName ? null : categoryName);
+            }} 
+            className="flex flex-1 lg:flex-none w-full lg:w-auto items-center justify-center gap-2 bg-slate-800 hover:bg-slate-900 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors"
+          >
+            <Download className="w-4 h-4" /> Export <ChevronDown className="w-4 h-4 ml-1" />
+          </button>
+
+          {exportDropdownOpen === categoryName && (
+            <div className="absolute right-0 top-full mt-2 w-40 bg-white border border-gray-200 rounded-lg shadow-xl z-50 overflow-hidden">
+              <button 
+                onClick={() => {
+                  exportToPDF(categoryName, getFilteredItems(currentItems));
+                  setExportDropdownOpen(null);
+                }} 
+                className="w-full text-left px-4 py-3 text-sm text-gray-700 hover:bg-slate-50 hover:text-blue-600 transition-colors border-b border-gray-100 flex items-center gap-2"
+              >
+                Download PDF
+              </button>
+              <button 
+                onClick={() => {
+                  exportToExcel(categoryName, getFilteredItems(currentItems));
+                  setExportDropdownOpen(null);
+                }} 
+                className="w-full text-left px-4 py-3 text-sm text-gray-700 hover:bg-slate-50 hover:text-emerald-600 transition-colors flex items-center gap-2"
+              >
+                Download Excel
+              </button>
+            </div>
+          )}
+        </div>
       </div>
     );
   };
@@ -241,9 +331,8 @@ export default function Dashboard() {
     });
   };
 
-  // 🔥 VIEW: ANALYTICS BOARD 
+  // --- VIEW: ANALYTICS BOARD ---
   const renderAnalyticsView = () => {
-    // 1. Process Data for Charts
     let totalFunding = 0;
     let totalItems = 0;
     const yearStatsMap = {};
@@ -273,8 +362,6 @@ export default function Dashboard() {
 
     return (
       <div className="p-4 sm:p-6 bg-slate-50 min-h-[500px]">
-        
-        {/* Summary Cards */}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
           <div className="bg-white p-6 rounded-xl border border-gray-200 shadow-sm flex items-center gap-4">
             <div className="p-3 bg-blue-100 text-blue-600 rounded-lg"><LayoutList className="w-8 h-8"/></div>
@@ -294,9 +381,7 @@ export default function Dashboard() {
           </div>
         </div>
 
-        {/* Charts Row */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          {/* Bar Chart */}
           <div className="lg:col-span-2 bg-white p-6 rounded-xl border border-gray-200 shadow-sm">
             <h3 className="text-lg font-bold text-gray-800 mb-6">Yearly Output Comparison</h3>
             <div className="h-[300px]">
@@ -315,7 +400,6 @@ export default function Dashboard() {
             </div>
           </div>
 
-          {/* Pie Chart */}
           <div className="bg-white p-6 rounded-xl border border-gray-200 shadow-sm">
             <h3 className="text-lg font-bold text-gray-800 mb-6">Record Distribution</h3>
             <div className="h-[300px]">

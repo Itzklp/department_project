@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { LayoutList, IndianRupee, BarChart2, PieChart as PieIcon, Lock } from 'lucide-react';
+import { LayoutList, IndianRupee, BarChart2, PieChart as PieIcon } from 'lucide-react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, Legend, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
 import config from '../config';
 
@@ -47,20 +47,6 @@ export default function Analytics() {
 
   if (loading) return <div className="min-h-screen flex items-center justify-center bg-gray-50"><div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div></div>;
 
-  // Security Check: If they are not Admin or HOD, block access.
-  if (!hasElevatedAccess) {
-    return (
-      <div className="max-w-3xl mx-auto mt-20 text-center p-8 bg-white rounded-xl shadow-sm border border-gray-200">
-        <div className="mx-auto w-16 h-16 bg-red-100 text-red-600 rounded-full flex items-center justify-center mb-4">
-          <Lock className="w-8 h-8" />
-        </div>
-        <h2 className="text-2xl font-bold text-gray-900 mb-2">Access Restricted</h2>
-        <p className="text-gray-500">The Analytics Board is strictly available to Department Administrators and the Head of Department.</p>
-        <button onClick={() => navigate('/dashboard')} className="mt-6 px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700">Return to Dashboard</button>
-      </div>
-    );
-  }
-
   // Process Data for Charts
   let totalFunding = 0;
   let totalItems = 0;
@@ -92,8 +78,15 @@ export default function Analytics() {
   return (
     <div className="max-w-7xl mx-auto px-4 py-8">
       <div className="mb-8 border-b border-gray-200 pb-4">
-        <h1 className="text-3xl font-bold text-gray-900">Department Analytics</h1>
-        <p className="text-gray-500 mt-1">Overview of department contributions and outputs.</p>
+        {/* Dynamic Headers based on access level */}
+        <h1 className="text-3xl font-bold text-gray-900">
+          {hasElevatedAccess ? "Department Analytics" : "My Impact Analytics"}
+        </h1>
+        <p className="text-gray-500 mt-1">
+          {hasElevatedAccess 
+            ? "Overview of department contributions and outputs." 
+            : "Overview of your personal contributions and outputs."}
+        </p>
         {dataError && <p className="text-red-500 mt-2">{dataError}</p>}
       </div>
       

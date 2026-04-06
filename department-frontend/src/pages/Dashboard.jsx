@@ -16,17 +16,25 @@ import {
   Mic,
   Award,
   Upload,
+  Download // Added Download icon
 } from "lucide-react";
-import config from "../config"; // Import your API config
+import config from "../config";
+
+// Import export libraries
+import * as XLSX from "xlsx";
+import jsPDF from "jspdf";
+import "jspdf-autotable";
 
 const Dashboard = () => {
   const navigate = useNavigate();
   const dropdownRef = useRef(null);
+  const exportDropdownRef = useRef(null); // Ref for export menu
 
   // States
   const [sortMode, setSortMode] = useState("updatedAt");
   const [loading, setLoading] = useState(true);
   const [isAddMenuOpen, setIsAddMenuOpen] = useState(false);
+  const [isExportMenuOpen, setIsExportMenuOpen] = useState(false); // State for export menu
 
   const [dashboardData, setDashboardData] = useState({
     publications: [],
@@ -49,11 +57,14 @@ const Dashboard = () => {
     apiEndpoint: null,
   });
 
-  // Handle click outside to close Add New dropdown
+  // Handle click outside to close dropdowns
   useEffect(() => {
     const handleClickOutside = (event) => {
       if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
         setIsAddMenuOpen(false);
+      }
+      if (exportDropdownRef.current && !exportDropdownRef.current.contains(event.target)) {
+        setIsExportMenuOpen(false);
       }
     };
     document.addEventListener("mousedown", handleClickOutside);
@@ -76,7 +87,7 @@ const Dashboard = () => {
           {
             method: "GET",
             headers: { Authorization: `Bearer ${token}` },
-          },
+          }
         );
 
         const result = await res.json();
@@ -84,11 +95,9 @@ const Dashboard = () => {
         if (res.ok && result.success) {
           const incomingData = result.data;
 
-          // 🔥 THE FIX: Bulletproof sorting function
           const sortData = (arr) => {
             if (!arr || !Array.isArray(arr)) return [];
             return [...arr].sort((a, b) => {
-              // Try createdAt first, fallback to 'year', otherwise 0
               const timeA = a.createdAt
                 ? new Date(a.createdAt).getTime()
                 : a.year
@@ -128,6 +137,243 @@ const Dashboard = () => {
     fetchDashboardData();
   }, [navigate]);
 
+  // --- CONFIGURATIONS ---
+  const sectionConfigs = [
+    {
+      key: "projects",
+      title: "Projects",
+      config: {
+        titleKey: "title",
+        backupTitleKey: "projectTitle",
+        metadataKeys: [
+          { label: "Funding", key: "fundingAgency" },
+          { label: "Status", key: "status" },
+        ],
+        formRoute: "/forms/project",
+        stateKey: "projects",
+        apiEndpoint: "projects",
+        onEdit: (item) => handleEdit(item, "/forms/project"),
+        onDelete: (item) => handleDeleteClick(item, "projects", "projects"),
+      },
+    },
+    {
+      key: "publications",
+      title: "Publications",
+      config: {
+        titleKey: "title",
+        backupTitleKey: "paperTitle",
+        metadataKeys: [
+          { label: "Journal", key: "journal" },
+          { label: "Year", key: "year" },
+        ],
+        formRoute: "/forms/publication",
+        stateKey: "publications",
+        apiEndpoint: "publications",
+        onEdit: (item) => handleEdit(item, "/forms/publication"),
+        onDelete: (item) => handleDeleteClick(item, "publications", "publications"),
+      },
+    },
+    {
+      key: "conferences",
+      title: "Conferences Attended",
+      config: {
+        titleKey: "title",
+        backupTitleKey: "conferenceName",
+        metadataKeys: [
+          { label: "Location", key: "location" },
+          { label: "Date", key: "date" },
+        ],
+        formRoute: "/forms/conference",
+        stateKey: "conferences",
+        apiEndpoint: "conferences",
+        onEdit: (item) => handleEdit(item, "/forms/conference"),
+        onDelete: (item) => handleDeleteClick(item, "conferences", "conferences"),
+      },
+    },
+    {
+      key: "patents",
+      title: "Patents",
+      config: {
+        titleKey: "title",
+        backupTitleKey: "patentTitle",
+        metadataKeys: [
+          { label: "Application No", key: "applicationNumber" },
+          { label: "Status", key: "status" },
+        ],
+        formRoute: "/forms/patent",
+        stateKey: "patents",
+        apiEndpoint: "patents",
+        onEdit: (item) => handleEdit(item, "/forms/patent"),
+        onDelete: (item) => handleDeleteClick(item, "patents", "patents"),
+      },
+    },
+    {
+      key: "books",
+      title: "Published Books",
+      config: {
+        titleKey: "title",
+        backupTitleKey: "bookTitle",
+        metadataKeys: [
+          { label: "Publisher", key: "publisher" },
+          { label: "ISBN", key: "isbn" },
+        ],
+        formRoute: "/forms/published-book",
+        stateKey: "books",
+        apiEndpoint: "published-books",
+        onEdit: (item) => handleEdit(item, "/forms/published-book"),
+        onDelete: (item) => handleDeleteClick(item, "books", "published-books"),
+      },
+    },
+    {
+      key: "awards",
+      title: "Awards & Honors",
+      config: {
+        titleKey: "title",
+        backupTitleKey: "awardName",
+        metadataKeys: [
+          { label: "Awarding Body", key: "awardingBody" },
+          { label: "Year", key: "year" },
+        ],
+        formRoute: "/forms/faculty-award",
+        stateKey: "awards",
+        apiEndpoint: "faculty-awards",
+        onEdit: (item) => handleEdit(item, "/forms/faculty-award"),
+        onDelete: (item) => handleDeleteClick(item, "awards", "faculty-awards"),
+      },
+    },
+    {
+      key: "phdThesis",
+      title: "PhD Thesis",
+      config: {
+        titleKey: "scholarName",
+        backupTitleKey: "title",
+        metadataKeys: [
+          { label: "Title", key: "thesisTitle" },
+          { label: "Year", key: "year" },
+        ],
+        formRoute: "/forms/phd-thesis",
+        stateKey: "phdThesis",
+        apiEndpoint: "phd-thesis",
+        onEdit: (item) => handleEdit(item, "/forms/phd-thesis"),
+        onDelete: (item) => handleDeleteClick(item, "phdThesis", "phd-thesis"),
+      },
+    },
+    {
+      key: "events",
+      title: "Department Events",
+      config: {
+        titleKey: "title",
+        backupTitleKey: "eventName",
+        metadataKeys: [
+          { label: "Role", key: "role" },
+          { label: "Date", key: "date" },
+        ],
+        formRoute: "/forms/department-event",
+        stateKey: "events",
+        apiEndpoint: "department-events",
+        onEdit: (item) => handleEdit(item, "/forms/department-event"),
+        onDelete: (item) => handleDeleteClick(item, "events", "department-events"),
+      },
+    },
+    {
+      key: "talks",
+      title: "Invited Talks",
+      config: {
+        titleKey: "title",
+        backupTitleKey: "topic",
+        metadataKeys: [
+          { label: "Venue", key: "venue" },
+          { label: "Date", key: "date" },
+        ],
+        formRoute: "/forms/invited-talk",
+        stateKey: "talks",
+        apiEndpoint: "invited-talks",
+        onEdit: (item) => handleEdit(item, "/forms/invited-talk"),
+        onDelete: (item) => handleDeleteClick(item, "talks", "invited-talks"),
+      },
+    },
+  ];
+
+  // --- EXPORT HANDLER ---
+  const handleExport = (format) => {
+    setIsExportMenuOpen(false);
+
+    if (format === "excel") {
+      const wb = XLSX.utils.book_new();
+      sectionConfigs.forEach((section) => {
+        const data = dashboardData[section.key];
+        if (data && data.length > 0) {
+          // Clean up DB specific fields before exporting
+          const cleanedData = data.map(item => {
+            const cleanItem = { ...item };
+            delete cleanItem._id;
+            delete cleanItem.__v;
+            delete cleanItem.userId;
+            return cleanItem;
+          });
+          const ws = XLSX.utils.json_to_sheet(cleanedData);
+          // Excel sheet names max length is 31 chars
+          XLSX.utils.book_append_sheet(wb, ws, section.title.substring(0, 31));
+        }
+      });
+      XLSX.writeFile(wb, "My_Contributions_Export.xlsx");
+      toast.success("Excel downloaded successfully!");
+      
+    } else if (format === "pdf") {
+      const doc = new jsPDF();
+      doc.setFontSize(20);
+      doc.text("My Dashboard Contributions", 14, 20);
+      let yPos = 30;
+
+      sectionConfigs.forEach((section) => {
+        const data = dashboardData[section.key];
+        if (data && data.length > 0) {
+          // Add new page if space is running out
+          if (yPos > 260) {
+            doc.addPage();
+            yPos = 20;
+          }
+
+          doc.setFontSize(14);
+          doc.text(section.title, 14, yPos);
+          yPos += 5;
+
+          // Define headers based on section config map
+          const headers = [
+            "Title",
+            ...section.config.metadataKeys.map((m) => m.label),
+          ];
+
+          // Map rows strictly to configured headers for clean visual
+          const rows = data.map((item) => {
+            const title =
+              item[section.config.titleKey] ||
+              item[section.config.backupTitleKey] ||
+              "N/A";
+            const row = [title];
+            section.config.metadataKeys.forEach((m) => {
+              row.push(item[m.key] || "N/A");
+            });
+            return row;
+          });
+
+          doc.autoTable({
+            startY: yPos,
+            head: [headers],
+            body: rows,
+            theme: "grid",
+            styles: { fontSize: 9 },
+            headStyles: { fillColor: [37, 99, 235] }, // Blue-600 color
+          });
+
+          yPos = doc.lastAutoTable.finalY + 15;
+        }
+      });
+      doc.save("My_Contributions_Export.pdf");
+      toast.success("PDF downloaded successfully!");
+    }
+  };
+
   // --- ACTION HANDLERS ---
   const handleEdit = (item, formRoute) =>
     navigate(formRoute, { state: { editData: item } });
@@ -155,14 +401,14 @@ const Dashboard = () => {
         {
           method: "DELETE",
           headers: { Authorization: `Bearer ${token}` },
-        },
+        }
       );
 
       if (res.ok) {
         setDashboardData((prevData) => ({
           ...prevData,
           [stateKey]: prevData[stateKey].filter(
-            (i) => (i._id || i.id) !== itemId,
+            (i) => (i._id || i.id) !== itemId
           ),
         }));
         toast.success("Record deleted successfully");
@@ -192,165 +438,6 @@ const Dashboard = () => {
       });
   };
 
-  // --- CONFIGURATIONS ---
-  // Notice: We check for multiple possible keys (e.g. `title` OR `projectName`) to ensure data maps correctly regardless of your DB schema names.
-  // --- CONFIGURATIONS ---
-  const sectionConfigs = [
-    {
-      key: "projects",
-      title: "Projects",
-      config: {
-        titleKey: "title",
-        backupTitleKey: "projectTitle",
-        metadataKeys: [
-          { label: "Funding", key: "fundingAgency" },
-          { label: "Status", key: "status" },
-        ],
-        formRoute: "/forms/project",
-        stateKey: "projects",
-        apiEndpoint: "projects",
-        onEdit: handleEdit,
-        onDelete: handleDeleteClick,
-      },
-    },
-    {
-      key: "publications",
-      title: "Publications",
-      config: {
-        titleKey: "title",
-        backupTitleKey: "paperTitle",
-        metadataKeys: [
-          { label: "Journal", key: "journal" },
-          { label: "Year", key: "year" },
-        ],
-        formRoute: "/forms/publication",
-        stateKey: "publications",
-        apiEndpoint: "publications",
-        onEdit: handleEdit,
-        onDelete: handleDeleteClick,
-      },
-    },
-    {
-      key: "conferences",
-      title: "Conferences Attended",
-      config: {
-        titleKey: "title",
-        backupTitleKey: "conferenceName",
-        metadataKeys: [
-          { label: "Location", key: "location" },
-          { label: "Date", key: "date" },
-        ],
-        formRoute: "/forms/conference",
-        stateKey: "conferences",
-        apiEndpoint: "conferences",
-        onEdit: handleEdit,
-        onDelete: handleDeleteClick,
-      },
-    },
-    {
-      key: "patents",
-      title: "Patents",
-      config: {
-        titleKey: "title",
-        backupTitleKey: "patentTitle",
-        metadataKeys: [
-          { label: "Application No", key: "applicationNumber" },
-          { label: "Status", key: "status" },
-        ],
-        formRoute: "/forms/patent",
-        stateKey: "patents",
-        apiEndpoint: "patents",
-        onEdit: handleEdit,
-        onDelete: handleDeleteClick,
-      },
-    },
-    {
-      key: "books",
-      title: "Published Books",
-      config: {
-        titleKey: "title",
-        backupTitleKey: "bookTitle",
-        metadataKeys: [
-          { label: "Publisher", key: "publisher" },
-          { label: "ISBN", key: "isbn" },
-        ],
-        formRoute: "/forms/published-book",
-        stateKey: "books",
-        apiEndpoint: "published-books",
-        onEdit: handleEdit,
-        onDelete: handleDeleteClick,
-      },
-    },
-    {
-      key: "awards",
-      title: "Awards & Honors",
-      config: {
-        titleKey: "title",
-        backupTitleKey: "awardName",
-        metadataKeys: [
-          { label: "Awarding Body", key: "awardingBody" },
-          { label: "Year", key: "year" },
-        ],
-        formRoute: "/forms/faculty-award",
-        stateKey: "awards",
-        apiEndpoint: "faculty-awards",
-        onEdit: handleEdit,
-        onDelete: handleDeleteClick,
-      },
-    },
-    {
-      key: "phdThesis",
-      title: "PhD Thesis",
-      config: {
-        titleKey: "scholarName",
-        backupTitleKey: "title",
-        metadataKeys: [
-          { label: "Title", key: "thesisTitle" },
-          { label: "Year", key: "year" },
-        ],
-        formRoute: "/forms/phd-thesis",
-        stateKey: "phdThesis",
-        apiEndpoint: "phd-thesis",
-        onEdit: handleEdit,
-        onDelete: handleDeleteClick,
-      },
-    },
-    {
-      key: "events",
-      title: "Department Events",
-      config: {
-        titleKey: "title",
-        backupTitleKey: "eventName",
-        metadataKeys: [
-          { label: "Role", key: "role" },
-          { label: "Date", key: "date" },
-        ],
-        formRoute: "/forms/department-event",
-        stateKey: "events",
-        apiEndpoint: "department-events",
-        onEdit: handleEdit,
-        onDelete: handleDeleteClick,
-      },
-    },
-    {
-      key: "talks",
-      title: "Invited Talks",
-      config: {
-        titleKey: "title",
-        backupTitleKey: "topic",
-        metadataKeys: [
-          { label: "Venue", key: "venue" },
-          { label: "Date", key: "date" },
-        ],
-        formRoute: "/forms/invited-talk",
-        stateKey: "talks",
-        apiEndpoint: "invited-talks",
-        onEdit: handleEdit,
-        onDelete: handleDeleteClick,
-      },
-    },
-  ];
-
   const quickActionsList = [
     { title: "Publication", icon: FileText, path: "/forms/publication" },
     { title: "Project", icon: Briefcase, path: "/forms/project" },
@@ -364,9 +451,8 @@ const Dashboard = () => {
     { title: "Bulk Upload", icon: Upload, path: "/bulk-upload" },
   ];
 
-  // Helper to check if dashboard is entirely empty
   const hasAnyData = Object.values(dashboardData).some(
-    (arr) => arr && arr.length > 0,
+    (arr) => arr && arr.length > 0
   );
 
   return (
@@ -378,8 +464,41 @@ const Dashboard = () => {
           <p className="text-gray-500 mt-1">Manage your academic records</p>
         </div>
 
-        <div className="flex items-center gap-3 w-full sm:w-auto">
+        <div className="flex flex-wrap items-center gap-3 w-full sm:w-auto">
           <SortToggle sortMode={sortMode} setSortMode={setSortMode} />
+
+          {/* Export Dropdown */}
+          <div className="relative" ref={exportDropdownRef}>
+            <button
+              onClick={() => setIsExportMenuOpen(!isExportMenuOpen)}
+              disabled={!hasAnyData}
+              className={`flex items-center gap-2 px-4 py-2 rounded-lg font-medium shadow-sm transition-colors w-full sm:w-auto justify-center ${
+                hasAnyData
+                  ? "bg-white border border-gray-300 hover:bg-gray-50 text-gray-700"
+                  : "bg-gray-100 border border-gray-200 text-gray-400 cursor-not-allowed"
+              }`}
+            >
+              <Download className="w-5 h-5" />
+              Export
+            </button>
+
+            {isExportMenuOpen && hasAnyData && (
+              <div className="absolute right-0 mt-2 w-48 bg-white rounded-xl shadow-lg border border-gray-100 py-2 z-50 overflow-hidden">
+                <button
+                  onClick={() => handleExport("pdf")}
+                  className="w-full text-left flex items-center gap-3 px-4 py-2.5 hover:bg-gray-50 text-gray-700 transition-colors"
+                >
+                  <span className="text-sm font-medium">Export as PDF</span>
+                </button>
+                <button
+                  onClick={() => handleExport("excel")}
+                  className="w-full text-left flex items-center gap-3 px-4 py-2.5 hover:bg-gray-50 text-gray-700 transition-colors"
+                >
+                  <span className="text-sm font-medium">Export as Excel</span>
+                </button>
+              </div>
+            )}
+          </div>
 
           {/* Add New Dropdown */}
           <div className="relative" ref={dropdownRef}>
@@ -448,12 +567,11 @@ const Dashboard = () => {
           </button>
         </div>
       ) : (
-        // Render Sections (Hiding empty ones)
+        // Render Sections
         <div className="space-y-4">
           {sectionConfigs.map((section) => {
             const sectionData = dashboardData[section.key];
 
-            // If there is no data, render nothing
             if (!sectionData || sectionData.length === 0) return null;
 
             return (
@@ -462,7 +580,6 @@ const Dashboard = () => {
                 title={section.title}
                 data={sectionData}
                 loading={false}
-                // Pass backupTitleKey so it tries multiple fields
                 config={{
                   ...section.config,
                   titleKey: section.config.titleKey,
