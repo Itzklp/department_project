@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { GoogleLogin } from '@react-oauth/google';
 import config from "../../config";
 
 export default function Login() {
@@ -14,10 +15,57 @@ export default function Login() {
 
   const handleChange = (e) => {
     setForm({ ...form, [e.target.name]: e.target.value });
-    // Clear error when user starts typing
     if (error) setError("");
   };
 
+  // ==========================================
+  // GOOGLE SSO LOGIN HANDLER
+  // ==========================================
+  const handleGoogleSuccess = async (credentialResponse) => {
+    setLoading(true);
+    setError("");
+
+    try {
+      const token = localStorage.getItem("token");
+      const res = await fetch(`${config.API_BASE_URL}/api/v1/auth/google-login`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json",
+                  "Authorization": `Bearer ${token}`
+        },
+        body: JSON.stringify({
+          credential: credentialResponse.credential,
+        }),
+      });
+
+      const data = await res.json();
+
+      if (res.ok) {
+        // Store authentication data
+        localStorage.setItem("token", data.token);
+        localStorage.setItem("role", data.user?.role || data.role);
+        localStorage.setItem("isFirstLogin", data.user?.isFirstLogin || data.isFirstLogin);
+
+        // Check if it's first login
+        if (data.user?.isFirstLogin || data.isFirstLogin) {
+          navigate("/change-password");
+          return;
+        }
+
+        navigate("/dashboard");
+      } else {
+        setError(data.message || "SSO Login failed. Ensure your email is registered.");
+      }
+    } catch (err) {
+      console.error("Google SSO error:", err);
+      setError("Network error. Please check your connection and try again.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // ==========================================
+  // MANUAL LOGIN HANDLER
+  // ==========================================
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
@@ -36,21 +84,17 @@ export default function Login() {
       const data = await res.json();
 
       if (res.ok) {
-        // Store authentication data
         localStorage.setItem("token", data.token);
-        localStorage.setItem("role", data.role);
-        localStorage.setItem("isFirstLogin", data.isFirstLogin);
+        localStorage.setItem("role", data.user?.role || data.role);
+        localStorage.setItem("isFirstLogin", data.user?.isFirstLogin || data.isFirstLogin);
 
-        // Check if it's first login - redirect to password change
-        if (data.isFirstLogin) {
+        if (data.user?.isFirstLogin || data.isFirstLogin) {
           navigate("/change-password");
           return;
         }
 
-        // Successful login - redirect to dashboard
         navigate("/dashboard");
       } else {
-        // Handle error response
         setError(data.message || "Invalid credentials. Please try again.");
       }
     } catch (err) {
@@ -85,9 +129,33 @@ export default function Login() {
           </div>
         )}
 
-        {/* Login Form */}
+        {/* Google SSO Button */}
+        <div className="mb-6 flex justify-center">
+          <GoogleLogin
+            onSuccess={handleGoogleSuccess}
+            onError={() => {
+              setError("Google authentication popup failed to open or was closed.");
+            }}
+            useOneTap
+            shape="rectangular"
+            theme="filled_blue"
+            size="large"
+            text="signin_with"
+          />
+        </div>
+
+        {/* Divider */}
+        <div className="relative mb-6">
+          <div className="absolute inset-0 flex items-center">
+            <div className="w-full border-t border-gray-300"></div>
+          </div>
+          <div className="relative flex justify-center text-sm">
+            <span className="px-2 bg-white text-gray-500">Or continue with email</span>
+          </div>
+        </div>
+
+        {/* Manual Login Form */}
         <form onSubmit={handleSubmit} className="space-y-6">
-          {/* Email Field */}
           <div>
             <label
               htmlFor="email"
@@ -109,7 +177,6 @@ export default function Login() {
             />
           </div>
 
-          {/* Password Field */}
           <div>
             <label
               htmlFor="password"
@@ -150,7 +217,6 @@ export default function Login() {
             </div>
           </div>
 
-          {/* Forgot Password Link */}
           <div className="flex items-center justify-end">
             <button
               type="button"
@@ -162,7 +228,6 @@ export default function Login() {
             </button>
           </div>
 
-          {/* Submit Button */}
           <button
             type="submit"
             disabled={loading}
@@ -202,7 +267,6 @@ export default function Login() {
           </button>
         </form>
 
-        {/* Additional Info */}
         <div className="mt-6 text-center">
           <p className="text-sm text-gray-600">
             New faculty member?{" "}
