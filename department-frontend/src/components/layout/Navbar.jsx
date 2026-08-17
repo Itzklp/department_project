@@ -5,6 +5,7 @@ import { LogOut, Menu, X } from 'lucide-react';
 const Navbar = () => {
   const navigate = useNavigate();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const role = localStorage.getItem('role'); // Get user role from local storage
 
   const handleLogout = () => {
     localStorage.removeItem('token');
@@ -62,6 +63,13 @@ const Navbar = () => {
               Quick Actions
             </NavLink>
 
+            {/* ADMIN ONLY DESKTOP LINK */}
+            {role === 'admin' && (
+              <NavLink to="/system-logs" className={navLinkClass}>
+                System Logs
+              </NavLink>
+            )}
+
             <button 
               onClick={handleLogout}
               className="ml-4 flex items-center gap-2 text-sm font-medium text-red-600 hover:text-red-800 transition-colors"
@@ -113,6 +121,18 @@ const Navbar = () => {
             >
               Quick Actions
             </NavLink>
+
+            {/* ADMIN ONLY MOBILE LINK */}
+            {role === 'admin' && (
+              <NavLink 
+                to="/system-logs" 
+                className={mobileNavLinkClass}
+                onClick={() => setIsMobileMenuOpen(false)}
+              >
+                System Logs
+              </NavLink>
+            )}
+
             <button
               onClick={() => {
                 setIsMobileMenuOpen(false);

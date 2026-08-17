@@ -9,6 +9,7 @@ import Login from "./pages/auth/Login";
 import ForgotPassword from "./pages/auth/ForgotPassword";
 import ChangePassword from "./pages/auth/ChangePassword";
 import ResetPassword from "./pages/auth/ResetPassword";
+import SystemLogs from "./pages/admin/SystemLogs";
 
 // App Pages
 import Dashboard from "./pages/Dashboard";
@@ -65,6 +66,7 @@ function App() {
           <Route path="/forms/invited-talk" element={<InvitedTalkForm />} />
           <Route path="/forms/faculty-award" element={<FacultyAwardForm />} />
           <Route path="/bulk-upload" element={<BulkUpload />} />
+          <Route path="/system-logs" element={<SystemLogs />} />
         </Route>
 
         {/* REDIRECTS */}
