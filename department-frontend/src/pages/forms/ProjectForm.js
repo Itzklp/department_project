@@ -9,25 +9,26 @@ export default function ProjectForm() {
   const navigate = useNavigate();
 
   const [form, setForm] = useState({
+    psrn: "",
     projectTitle: "",
     projectPI: null,
     projectCoPI: null,
     collaborator: "",
     fundingAgency: "",
+    scheme: "",
     dateSanctioned: "",
+    projectStartDate: "",
     dateCompletion: "",
     status: "",
     notableAchievements: "",
     sanctionLetterLink: "",
     totalINR: "",
-    type: "National",
-    category: "Government"
+    type: "Sponsored",
+    category: "Govt"
   });
 
   const [facultyOptions, setFacultyOptions] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
-
-  // ✅ NEW
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   useEffect(() => {
@@ -97,8 +98,6 @@ export default function ProjectForm() {
 
       if (res.ok) {
         toast.success("Project added successfully!");
-
-        // ✅ Redirect like PublicationForm
         navigate("/quick-actions");
       } else {
         toast.error(data.message || "Error adding project");
@@ -113,8 +112,8 @@ export default function ProjectForm() {
 
   return (
     <div className="max-w-3xl mx-auto p-4 mt-6">
-      
-      {/* ✅ Back Button */}
+
+      {/* Back Button */}
       <button
         type="button"
         onClick={() => navigate("/quick-actions")}
@@ -130,6 +129,25 @@ export default function ProjectForm() {
       >
         <h2 className="text-2xl font-bold mb-6">Add Project</h2>
 
+        <div className="grid grid-cols-2 gap-3 mb-3">
+          <input
+            type="text"
+            name="psrn"
+            placeholder="PSRN"
+            value={form.psrn}
+            onChange={handleChange}
+            className="p-2 border rounded"
+          />
+          <input
+            type="text"
+            name="scheme"
+            placeholder="Scheme"
+            value={form.scheme}
+            onChange={handleChange}
+            className="p-2 border rounded"
+          />
+        </div>
+
         <input
           type="text"
           name="projectTitle"
@@ -142,7 +160,7 @@ export default function ProjectForm() {
 
         <div className="mb-3">
           <label className="block text-sm font-medium mb-1">
-            Principal Investigator *
+            Principal Investigator (PI) *
           </label>
           <Select
             options={facultyOptions}
@@ -157,7 +175,7 @@ export default function ProjectForm() {
 
         <div className="mb-3">
           <label className="block text-sm font-medium mb-1">
-            Co-Principal Investigator
+            Co-PI
           </label>
           <Select
             options={facultyOptions}
@@ -182,7 +200,7 @@ export default function ProjectForm() {
         <input
           type="text"
           name="fundingAgency"
-          placeholder="Funding Agency"
+          placeholder="Agency"
           value={form.fundingAgency}
           onChange={handleChange}
           className="w-full mb-3 p-2 border rounded"
@@ -190,22 +208,78 @@ export default function ProjectForm() {
         />
 
         <div className="grid grid-cols-2 gap-3 mb-3">
-          <input
-            type="date"
-            name="dateSanctioned"
-            value={form.dateSanctioned}
-            onChange={handleChange}
-            className="p-2 border rounded"
-            required
-          />
-          <input
-            type="date"
-            name="dateCompletion"
-            value={form.dateCompletion}
-            onChange={handleChange}
-            className="p-2 border rounded"
-            required
-          />
+          <div>
+            <label className="block text-xs font-bold text-gray-500 uppercase mb-1">
+              Type of Project (Govt/Industry/International)
+            </label>
+            <select
+              name="category"
+              value={form.category}
+              onChange={handleChange}
+              className="w-full p-2 border rounded"
+              required
+            >
+              <option value="Govt">Govt</option>
+              <option value="Industry">Industry</option>
+              <option value="International">International</option>
+            </select>
+          </div>
+          <div>
+            <label className="block text-xs font-bold text-gray-500 uppercase mb-1">
+              Type of Project (Consultancy/Sponsored)
+            </label>
+            <select
+              name="type"
+              value={form.type}
+              onChange={handleChange}
+              className="w-full p-2 border rounded"
+              required
+            >
+              <option value="Sponsored">Sponsored</option>
+              <option value="Consultancy">Consultancy</option>
+            </select>
+          </div>
+        </div>
+
+        <div className="grid grid-cols-3 gap-3 mb-3">
+          <div>
+            <label className="block text-xs font-bold text-gray-500 uppercase mb-1">
+              Sanctioned Date
+            </label>
+            <input
+              type="date"
+              name="dateSanctioned"
+              value={form.dateSanctioned}
+              onChange={handleChange}
+              className="p-2 border rounded w-full"
+              required
+            />
+          </div>
+          <div>
+            <label className="block text-xs font-bold text-gray-500 uppercase mb-1">
+              Project Start Date
+            </label>
+            <input
+              type="date"
+              name="projectStartDate"
+              value={form.projectStartDate}
+              onChange={handleChange}
+              className="p-2 border rounded w-full"
+            />
+          </div>
+          <div>
+            <label className="block text-xs font-bold text-gray-500 uppercase mb-1">
+              Project End Date
+            </label>
+            <input
+              type="date"
+              name="dateCompletion"
+              value={form.dateCompletion}
+              onChange={handleChange}
+              className="p-2 border rounded w-full"
+              required
+            />
+          </div>
         </div>
 
         <input
@@ -239,7 +313,7 @@ export default function ProjectForm() {
         <input
           type="number"
           name="totalINR"
-          placeholder="Total Amount"
+          placeholder="Amount Sanctioned (Rs)"
           value={form.totalINR}
           onChange={handleChange}
           className="w-full mb-3 p-2 border rounded"

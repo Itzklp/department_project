@@ -157,20 +157,41 @@ export default function Dashboard() {
   // --- EXPORT CONFIGURATIONS ---
   const getExportConfigs = () => ({
     publications: { cols: ["Year", "Title", "Authors", "Journal", "Vol/Iss/Pg", "DOI"], mapRow: (item, yr) => [yr, item.title, Array.isArray(item.authors) ? item.authors.join(", ") : item.authors, item.journal, `Vol: ${item.volume||'-'}, Iss: ${item.issue||'-'}, Pg: ${item.pages||'-'}`, item.doi||'-'] },
-    projects: { cols: ["Year", "Project Title", "Funding Agency", "Collaborators", "Total INR", "Type/Status"], mapRow: (item, yr) => [yr, item.projectTitle, item.fundingAgency, item.collaborator, item.totalINR?.toLocaleString('en-IN') || '-', `${item.type||'-'} / ${item.status||'-'}`] },
+    projects: { 
+      cols: ["Year", "PSRN", "Project Title", "Agency", "Scheme", "Collaborators", "Amount Sanctioned (Rs)", "Sanctioned Date", "Project Start Date", "Project End Date", "Type/Category", "Status"], 
+      mapRow: (item, yr) => {
+        const fDate = (d) => d ? d.split('T')[0] : '-';
+        return [
+          yr, item.psrn || '-', item.projectTitle, item.fundingAgency, item.scheme || '-', item.collaborator || '-',
+          item.totalINR?.toLocaleString('en-IN') || '-', fDate(item.dateSanctioned), fDate(item.projectStartDate),
+          fDate(item.dateCompletion), `${item.type||'-'} / ${item.category||'-'}`, item.status
+        ];
+      }
+    },
     conferences: { cols: ["Year", "Paper Title", "Conference Name", "Authors", "Publisher", "Location"], mapRow: (item, yr) => [yr, item.title, item.conferenceName, Array.isArray(item.authors) ? item.authors.join(", ") : item.authors, item.publisher||'-', item.location||'-'] },
     awards: { cols: ["Year", "Award Title", "Faculty Name", "Organization", "Journal Info", "Category"], mapRow: (item, yr) => [yr, item.title, item.facultyName, item.organization, item.journalInfo||'-', item.category||'-'] },
     events: { cols: ["Date", "Event Title", "Coordinators", "Type", "Organized By", "Description"], mapRow: (item, yr) => [item.date ? item.date.split('T')[0] : yr, item.title, Array.isArray(item.coordinators) ? item.coordinators.join(", ") : item.coordinators, item.type, item.organizedBy, item.description||'-'] },
     books: { cols: ["Year", "Book Title", "Author", "Type", "Publisher", "Series", "Link"], mapRow: (item, yr) => [yr, item.title, item.author, item.type, item.publisher, item.series||'-', item.link||'-'] },
     phdThesis: { 
-      cols: ["Year", "Thesis Title", "Scholar Name", "Supervisor", "Fellowship", "Status", "DOJ", "Proposal", "Qualified", "Pre-Sub", "Thesis-Sub", "Viva"], 
+      cols: [
+        "Year", "Name", "ID No", "Desig", "Proposed Topic of Research", "Supervisor", "Co-Supervisor(s)",
+        "DAC Member1", "DAC Member2", "Source of Stipend", "Mobile No", "LAB No.", "Intercom No.",
+        "Status", "DOJ", "Inst. Fellowship W.E.F", "Inst. Stipend Ended", "QE Attempt 1", "QE Attempt 2",
+        "Proposal Presentation", "Proposal Approved", "Qualified", "Pre-Submission", "Thesis-Sub", "Viva", "Remarks"
+      ], 
       mapRow: (item, yr) => {
         const fDate = (d) => d ? d.split('T')[0] : '-';
+        const joinArr = (v) => Array.isArray(v) ? v.join(", ") : (v || '-');
         return [
-          yr, item.thesisTitle, item.scholarName, item.supervisor, 
-          item.fellowshipProgram || '-', item.status, 
-          fDate(item.dateOfJoining), fDate(item.dateOfProposal), fDate(item.dateOfPhdQualified), 
-          fDate(item.dateOfPreSubmission), fDate(item.dateOfThesisSubmission), fDate(item.dateOfVivaVoce)
+          yr, item.scholarName, item.studentId || '-', item.designation || '-', item.thesisTitle,
+          item.supervisor, joinArr(item.coSupervisor), item.dacMember1 || '-', item.dacMember2 || '-',
+          joinArr(item.sourceOfStipend), item.mobileNo || '-', item.labNo || '-', item.intercomNo || '-',
+          item.status,
+          fDate(item.dateOfJoining), fDate(item.instituteFellowshipStartDate), fDate(item.instituteStipendEndDate),
+          fDate(item.qeAttempt1Date), fDate(item.qeAttempt2Date),
+          fDate(item.dateOfProposal), fDate(item.proposalApprovedDate), fDate(item.dateOfPhdQualified),
+          fDate(item.dateOfPreSubmission), fDate(item.dateOfThesisSubmission), fDate(item.dateOfVivaVoce),
+          item.remarks || '-'
         ];
       }
     },

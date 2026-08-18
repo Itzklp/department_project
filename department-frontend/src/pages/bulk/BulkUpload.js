@@ -18,14 +18,22 @@ export default function BulkUpload() {
           title="Faculty Bulk Upload"
           endpoint="/api/v1/faculty/bulk-upload"
           requiredColumns={[
-            "firstName",
-            "lastName",
-            "email",
-            "department",
-            "designation",
-            "researchArea",
-            "teaches",
-            "joiningDate"
+            "PSRN",
+            "Name of the Faculty",
+            "Current Designation",
+            "Email ID",
+            "DOJ",
+            "Email ID",
+            "Mobile No.",
+            "Chamber No.",
+            "Intercom No.",
+            "Research Area",
+            "Promoted as ASTP w.e.f.",
+            "Promoted as ASOP w.e.f.",
+            "Promoted as Professor w.e.f",
+            "Promoted as Sr. Professor w.e.f",
+            "Name of Ph.D. Scholars Under Supervision",
+            "Name of PhD Students Under DAC Membership"
           ]}
         />
 
@@ -50,19 +58,20 @@ export default function BulkUpload() {
           title="Project Bulk Upload"
           endpoint="/api/v1/project/bulk"
           requiredColumns={[
-            "Project Title",
-            "PI",
+            "PSRN",
+            "Principal Investigator (PI)",
             "Co-PI",
+            "Type of Project (Govt/Industry/International)",
+            "Type of Project (Consultancy/Sponsored)",
+            "Project Title",
+            "Agency",
             "Collaborator",
-            "Funding Agency",
-            "Date Sanctioned",
-            "Date Completion",
-            "Status",
-            "Notable Achievements",
-            "Sanction Letter Link",
-            "Total INR",
-            "Type",
-            "Category"
+            "Scheme",
+            "Sanctioned Date",
+            "Amount Sanctioned (Rs)",
+            "Project Start Date",
+            "Project End Date",
+            "Status"
           ]}
         />
 
@@ -88,11 +97,28 @@ export default function BulkUpload() {
           endpoint="/api/v1/phdThesis/bulk"
           requiredColumns={[
             "Name",
-            "StudentId",
-            "Topic",
+            "ID No",
+            "Desig",
+            "Source of Stipend",
+            "Mobile No",
+            "LAB No.",
+            "Intercom No.",
+            "DOJ",
+            "Institute Fellowship Started W.E.F",
             "Supervisor",
-            "CoSupervisor",
-            "YearAwarded"
+            "Co-Supervisor(s)",
+            "Inst Stipend Ended on",
+            "Date (1st attempt of QE)",
+            "Date (2nd attempt of QE (if any))",
+            "Qualifying Passed on",
+            "Date of Proposal Presentation",
+            "DAC Member1",
+            "DAC Member2",
+            "Proposed Topic of Research",
+            "Proposal Approved on",
+            "Date of Pre Sumission Seminar",
+            "Date of Viva Voce Exam",
+            "Remarks (if any)"
           ]}
         />
 
